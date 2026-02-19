@@ -1,7 +1,18 @@
-import  { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
+import {
+  Home, Calendar, Bell, User, BedDouble, Activity, Heart, Thermometer,
+  Droplets, Weight, AlertTriangle, FileText, Users, Stethoscope, Brain,
+  Bone, Baby, Microscope, Ear, Eye, Dna, Pill, Cpu, Zap, Video,
+  Phone, Mic, MicOff, VideoOff, MessageSquare, Monitor, ChevronLeft,
+  Plus, Minus, Search, Shield, Globe, Lock, Star, Clock, MapPin,
+  Cross, Siren, Ambulance, UserCheck, ClipboardList, TrendingUp,
+  LogOut, Settings, ChevronRight, Sun, Moon, Sunset, Fingerprint,
+  PenLine, Send, Printer, Share2, CheckCircle, XCircle, AlertCircle,
+  Building2, FlaskConical, ShoppingBag, Truck, Navigation, PhoneCall
+} from "lucide-react";
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 type Screen =
@@ -14,26 +25,59 @@ type Screen =
   | "pat_vitals" | "pat_billing" | "pat_notifications" | "pat_family" | "pat_profile";
 
 type Role = "doctor" | "patient" | null;
+type ThemeMode = "dark" | "semidark" | "light";
 
-type Theme = {
-  mode: "dark" | "light";
-  bg: string;
-  text: string;
-  textSec: string;
-  cardBg: string;
-  cardBorder: string;
-  headerBg: string;
-  inputBg: string;
-  inputBorder: string;
-  navBg: string;
-  accent: string;
-  iconBg: string;
+// ─── THEME SYSTEM ─────────────────────────────────────────────────────────────
+const THEMES: Record<ThemeMode, {
+  bg: string; cardBg: string; headerBg: string; text: string;
+  subText: string; accent: string; border: string; inputBg: string;
+  navBg: string; splashBg: string; statCard: string;
+}> = {
+  dark: {
+    bg: "#050d1a",
+    cardBg: "rgba(26,58,110,0.25)",
+    headerBg: "linear-gradient(135deg,#0a1628,#1a3a6e)",
+    text: "#ffffff",
+    subText: "rgba(147,197,253,0.7)",
+    accent: "#93c5fd",
+    border: "rgba(147,197,253,0.12)",
+    inputBg: "rgba(147,197,253,0.1)",
+    navBg: "rgba(10,22,40,0.98)",
+    splashBg: "linear-gradient(135deg,#0a1628 0%,#1a3a6e 50%,#0f2347 100%)",
+    statCard: "rgba(26,58,110,0.3)",
+  },
+  semidark: {
+    bg: "#0f1f3d",
+    cardBg: "rgba(30,60,120,0.35)",
+    headerBg: "linear-gradient(135deg,#0f1f3d,#1e3a7a)",
+    text: "#e8f0fe",
+    subText: "rgba(160,200,255,0.75)",
+    accent: "#90bfff",
+    border: "rgba(100,160,255,0.18)",
+    inputBg: "rgba(100,160,255,0.12)",
+    navBg: "rgba(15,31,61,0.98)",
+    splashBg: "linear-gradient(135deg,#0f1f3d 0%,#1e3a7a 50%,#142d5e 100%)",
+    statCard: "rgba(30,60,120,0.4)",
+  },
+  light: {
+    bg: "#f0f4ff",
+    cardBg: "rgba(255,255,255,0.92)",
+    headerBg: "linear-gradient(135deg,#1a3a6e,#2563eb)",
+    text: "#0f1f3d",
+    subText: "rgba(30,70,160,0.65)",
+    accent: "#1d4ed8",
+    border: "rgba(30,70,160,0.12)",
+    inputBg: "rgba(30,70,160,0.06)",
+    navBg: "rgba(240,244,255,0.98)",
+    splashBg: "linear-gradient(135deg,#1a3a6e 0%,#2563eb 50%,#0f2347 100%)",
+    statCard: "rgba(255,255,255,0.9)",
+  },
 };
 
 // ─── MOCK DATA ─────────────────────────────────────────────────────────────────
 const OPD_PATIENTS = [
   { id: "P10-2024-001", name: "Rahul Sharma", time: "09:00 AM", complaint: "Chest pain, shortness of breath", status: "In-Progress", age: 52, gender: "M", blood: "B+", bp: "148/92", spo2: "96%", pulse: "88 bpm", temp: "98.6°F", weight: "82 kg", rbs: "142 mg/dL", allergy: "Penicillin", diagnosis: "Hypertensive heart disease" },
-  { id: "P10-2024-002", name: "Priya Mehta", time: "09:30 AM", complaint: "Fever, cough, body ache", status: "Waiting", age: 34, gender: "F", blood: "O+", bp: "110/70", spo2: "98%", pulse: "78 bpm", temp: "101.2°F", weight: "58 kg", rbs: "98 mg/dL", allergy: "None", diagnosis: "Viral URTl" },
+  { id: "P10-2024-002", name: "Priya Mehta", time: "09:30 AM", complaint: "Fever, cough, body ache", status: "Waiting", age: 34, gender: "F", blood: "O+", bp: "110/70", spo2: "98%", pulse: "78 bpm", temp: "101.2°F", weight: "58 kg", rbs: "98 mg/dL", allergy: "None", diagnosis: "Viral URTI" },
   { id: "P10-2024-003", name: "Vikram Nair", time: "10:00 AM", complaint: "Knee pain, swelling", status: "Checked In", age: 67, gender: "M", blood: "A+", bp: "132/84", spo2: "97%", pulse: "72 bpm", temp: "98.2°F", weight: "76 kg", rbs: "118 mg/dL", allergy: "Sulfa", diagnosis: "Osteoarthritis" },
   { id: "P10-2024-004", name: "Ananya Patel", time: "10:30 AM", complaint: "Headache, visual disturbances", status: "Completed", age: 29, gender: "F", blood: "AB+", bp: "120/78", spo2: "99%", pulse: "68 bpm", temp: "98.4°F", weight: "54 kg", rbs: "88 mg/dL", allergy: "NSAIDs", diagnosis: "Migraine" },
   { id: "P10-2024-005", name: "Suresh Kumar", time: "11:00 AM", complaint: "Diabetes follow-up", status: "Waiting", age: 58, gender: "M", blood: "B-", bp: "138/88", spo2: "97%", pulse: "76 bpm", temp: "98.8°F", weight: "88 kg", rbs: "210 mg/dL", allergy: "None", diagnosis: "Type 2 DM" },
@@ -47,25 +91,51 @@ const IPD_PATIENTS = [
 ];
 
 const DEPARTMENTS = [
-  { name: "Cardiology", icon: "❤️", doctors: 8, color: "#ef4444" },
-  { name: "Neurology", icon: "🧠", doctors: 6, color: "#8b5cf6" },
-  { name: "Orthopedics", icon: "🦴", doctors: 10, color: "#f59e0b" },
-  { name: "Pediatrics", icon: "👶", doctors: 7, color: "#10b981" },
-  { name: "Gynecology", icon: "🌸", doctors: 9, color: "#ec4899" },
-  { name: "ENT", icon: "👂", doctors: 5, color: "#06b6d4" },
-  { name: "Ophthalmology", icon: "👁️", doctors: 4, color: "#6366f1" },
-  { name: "Dermatology", icon: "🧬", doctors: 6, color: "#f97316" },
-  { name: "Gastro", icon: "🫁", doctors: 5, color: "#14b8a6" },
-  { name: "Oncology", icon: "🎗️", doctors: 8, color: "#a855f7" },
-  { name: "Urology", icon: "💊", doctors: 4, color: "#0ea5e9" },
-  { name: "Psychiatry", icon: "🧘", doctors: 3, color: "#84cc16" },
+  { name: "Cardiology",    Icon: Heart,          doctors: 8,  color: "#ef4444" },
+  { name: "Neurology",     Icon: Brain,          doctors: 6,  color: "#8b5cf6" },
+  { name: "Orthopedics",   Icon: Bone,           doctors: 10, color: "#f59e0b" },
+  { name: "Pediatrics",    Icon: Baby,           doctors: 7,  color: "#10b981" },
+  { name: "Gynecology",    Icon: Activity,       doctors: 9,  color: "#ec4899" },
+  { name: "ENT",           Icon: Ear,            doctors: 5,  color: "#06b6d4" },
+  { name: "Ophthalmology", Icon: Eye,            doctors: 4,  color: "#6366f1" },
+  { name: "Dermatology",   Icon: Dna,            doctors: 6,  color: "#f97316" },
+  { name: "Gastro",        Icon: Stethoscope,    doctors: 5,  color: "#14b8a6" },
+  { name: "Oncology",      Icon: Cpu,            doctors: 8,  color: "#a855f7" },
+  { name: "Urology",       Icon: Pill,           doctors: 4,  color: "#0ea5e9" },
+  { name: "Psychiatry",    Icon: Brain,          doctors: 3,  color: "#84cc16" },
 ];
 
-const DOCTORS_LIST = [
-  { id: 1, name: "Dr. Arjun Mehta", dept: "Cardiology", exp: "18 yrs", fee: "₹800", rating: 4.9, available: true, slots: ["9:00 AM", "10:30 AM", "2:00 PM", "4:30 PM"] },
-  { id: 2, name: "Dr. Sunita Rao", dept: "Neurology", exp: "14 yrs", fee: "₹900", rating: 4.8, available: true, slots: ["9:30 AM", "11:00 AM", "3:00 PM"] },
-  { id: 3, name: "Dr. Rajesh Kumar", dept: "Orthopedics", exp: "22 yrs", fee: "₹750", rating: 4.7, available: false, slots: ["10:00 AM", "2:30 PM"] },
-  { id: 4, name: "Dr. Meera Nair", dept: "Pediatrics", exp: "12 yrs", fee: "₹600", rating: 4.9, available: true, slots: ["8:30 AM", "11:30 AM", "4:00 PM"] },
+const DOCTORS_BY_DEPT: Record<string, Array<{id: number; name: string; dept: string; exp: string; fee: string; rating: number; available: boolean; slots: string[]; qual: string;}>> = {
+  "Cardiology": [
+    { id: 1, name: "Dr. Arjun Mehta", dept: "Cardiology", qual: "MD, DM Cardiology", exp: "18 yrs", fee: "₹800", rating: 4.9, available: true, slots: ["9:00 AM", "10:30 AM", "2:00 PM", "4:30 PM"] },
+    { id: 2, name: "Dr. Kavitha Pillai", dept: "Cardiology", qual: "MD, DNB Cardiology", exp: "12 yrs", fee: "₹700", rating: 4.8, available: true, slots: ["9:30 AM", "11:00 AM", "3:30 PM"] },
+    { id: 3, name: "Dr. Rohan Sinha", dept: "Cardiology", qual: "MBBS, MD", exp: "8 yrs", fee: "₹600", rating: 4.6, available: false, slots: ["10:00 AM", "4:00 PM"] },
+  ],
+  "Neurology": [
+    { id: 4, name: "Dr. Sunita Rao", dept: "Neurology", qual: "MD, DM Neurology", exp: "14 yrs", fee: "₹900", rating: 4.8, available: true, slots: ["9:30 AM", "11:00 AM", "3:00 PM"] },
+    { id: 5, name: "Dr. Anil Verma", dept: "Neurology", qual: "MBBS, MD, DNB", exp: "10 yrs", fee: "₹850", rating: 4.7, available: true, slots: ["10:00 AM", "2:30 PM"] },
+  ],
+  "Orthopedics": [
+    { id: 7, name: "Dr. Rajesh Kumar", dept: "Orthopedics", qual: "MS Ortho, FRCS", exp: "22 yrs", fee: "₹750", rating: 4.7, available: false, slots: ["10:00 AM", "2:30 PM"] },
+    { id: 8, name: "Dr. Sunil Rao", dept: "Orthopedics", qual: "MS Ortho", exp: "15 yrs", fee: "₹700", rating: 4.6, available: true, slots: ["9:00 AM", "11:30 AM", "3:00 PM"] },
+  ],
+  "Pediatrics": [
+    { id: 10, name: "Dr. Meera Nair", dept: "Pediatrics", qual: "MD Pediatrics, MRCP", exp: "12 yrs", fee: "₹600", rating: 4.9, available: true, slots: ["8:30 AM", "11:30 AM", "4:00 PM"] },
+    { id: 11, name: "Dr. Deepak Iyer", dept: "Pediatrics", qual: "MBBS, MD", exp: "8 yrs", fee: "₹550", rating: 4.7, available: true, slots: ["9:00 AM", "12:00 PM", "3:30 PM"] },
+  ],
+  "Gynecology": [
+    { id: 13, name: "Dr. Rekha Pillai", dept: "Gynecology", qual: "MD, DGO", exp: "16 yrs", fee: "₹700", rating: 4.8, available: true, slots: ["9:00 AM", "11:00 AM", "3:00 PM"] },
+    { id: 14, name: "Dr. Asha Sharma", dept: "Gynecology", qual: "MS Gynecology", exp: "11 yrs", fee: "₹650", rating: 4.7, available: true, slots: ["10:00 AM", "2:30 PM", "4:30 PM"] },
+  ],
+  "ENT": [
+    { id: 16, name: "Dr. Mohan Das", dept: "ENT", qual: "MS ENT, DORL", exp: "13 yrs", fee: "₹650", rating: 4.7, available: true, slots: ["9:00 AM", "11:00 AM", "3:30 PM"] },
+    { id: 17, name: "Dr. Lakshmi Nair", dept: "ENT", qual: "MBBS, MS ENT", exp: "9 yrs", fee: "₹600", rating: 4.6, available: true, slots: ["10:00 AM", "2:00 PM"] },
+  ],
+};
+
+const FALLBACK_DOCTORS = (dept: string) => [
+  { id: 100, name: `Dr. Suresh Babu`, dept, qual: "MD, Consultant", exp: "14 yrs", fee: "₹700", rating: 4.7, available: true, slots: ["9:00 AM", "11:00 AM", "3:00 PM"] },
+  { id: 101, name: `Dr. Kavitha Menon`, dept, qual: "MBBS, MD", exp: "10 yrs", fee: "₹650", rating: 4.6, available: true, slots: ["10:00 AM", "2:30 PM", "4:30 PM"] },
 ];
 
 const LAB_TESTS = [
@@ -80,14 +150,14 @@ const LAB_TESTS = [
 ];
 
 const MEDICINES = [
-  { name: "Amlodipine 5mg", category: "Antihypertensive", price: "₹12" },
-  { name: "Metformin 500mg", category: "Antidiabetic", price: "₹8" },
-  { name: "Atorvastatin 10mg", category: "Statin", price: "₹15" },
-  { name: "Pantoprazole 40mg", category: "PPI", price: "₹10" },
-  { name: "Azithromycin 500mg", category: "Antibiotic", price: "₹45" },
-  { name: "Paracetamol 650mg", category: "Analgesic", price: "₹5" },
-  { name: "Cetirizine 10mg", category: "Antihistamine", price: "₹6" },
-  { name: "Omeprazole 20mg", category: "PPI", price: "₹8" },
+  { name: "Amlodipine 5mg",     category: "Antihypertensive", price: "₹12" },
+  { name: "Metformin 500mg",    category: "Antidiabetic",     price: "₹8"  },
+  { name: "Atorvastatin 10mg",  category: "Statin",           price: "₹15" },
+  { name: "Pantoprazole 40mg",  category: "PPI",              price: "₹10" },
+  { name: "Azithromycin 500mg", category: "Antibiotic",       price: "₹45" },
+  { name: "Paracetamol 650mg",  category: "Analgesic",        price: "₹5"  },
+  { name: "Cetirizine 10mg",    category: "Antihistamine",    price: "₹6"  },
+  { name: "Omeprazole 20mg",    category: "PPI",              price: "₹8"  },
 ];
 
 const MONTHLY_OPD = [
@@ -103,275 +173,339 @@ const BP_DATA = [
 ];
 
 const DOC_NOTIFICATIONS = [
-  { type: "critical", title: "Critical Lab Alert", msg: "Rahul Sharma — K⁺ 6.8 mEq/L (CRITICAL HIGH)", time: "2 min ago" },
-  { type: "appointment", title: "New Appointment Request", msg: "Deepa Krishnan — OPD tomorrow 11 AM", time: "15 min ago" },
-  { type: "ipd", title: "IPD Deterioration", msg: "Mohan Gupta — SpO₂ dropped to 88%", time: "32 min ago" },
-  { type: "admin", title: "Admin Notice", msg: "CME Conference: Feb 22, 2024 — Conf. Hall B", time: "1 hr ago" },
-  { type: "appointment", title: "Teleconsult Request", msg: "Neha Singh — Video Consult at 5 PM", time: "2 hrs ago" },
+  { type: "critical",     title: "Critical Lab Alert",        msg: "Rahul Sharma — K⁺ 6.8 mEq/L (CRITICAL HIGH)", time: "2 min ago" },
+  { type: "appointment",  title: "New Appointment Request",   msg: "Deepa Krishnan — OPD tomorrow 11 AM",          time: "15 min ago" },
+  { type: "ipd",          title: "IPD Deterioration",         msg: "Mohan Gupta — SpO₂ dropped to 88%",            time: "32 min ago" },
+  { type: "admin",        title: "Admin Notice",              msg: "CME Conference: Feb 22, 2024 — Conf. Hall B",   time: "1 hr ago" },
+  { type: "appointment",  title: "Teleconsult Request",       msg: "Neha Singh — Video Consult at 5 PM",            time: "2 hrs ago" },
 ];
 
 const PAT_NOTIFICATIONS = [
   { type: "reminder", title: "Appointment Reminder", msg: "OPD with Dr. Arjun Mehta tomorrow at 9:00 AM", time: "1 hr ago" },
-  { type: "report", title: "Lab Report Ready", msg: "Your CBC & LFT report is now available", time: "3 hrs ago" },
-  { type: "medicine", title: "Medicine Refill", msg: "Metformin 500mg — only 5 tablets remaining", time: "5 hrs ago" },
-  { type: "hospital", title: "Health Camp", msg: "Free diabetes screening — Feb 22, OPD Block", time: "1 day ago" },
+  { type: "report",   title: "Lab Report Ready",     msg: "Your CBC & LFT report is now available",       time: "3 hrs ago" },
+  { type: "medicine", title: "Medicine Refill",       msg: "Metformin 500mg — only 5 tablets remaining",  time: "5 hrs ago" },
+  { type: "hospital", title: "Health Camp",           msg: "Free diabetes screening — Feb 22, OPD Block", time: "1 day ago" },
 ];
 
 const FAMILY_MEMBERS = [
-  { name: "Meera Sharma", relation: "Spouse", age: 45, blood: "A+", uhid: "P10-F-2891" },
-  { name: "Aryan Sharma", relation: "Son", age: 18, blood: "B+", uhid: "P10-F-3042" },
-  { name: "Kamla Sharma", relation: "Mother", age: 72, blood: "O+", uhid: "P10-F-1205" },
+  { name: "Meera Sharma",  relation: "Spouse", age: 45, blood: "A+", uhid: "P10-F-2891" },
+  { name: "Aryan Sharma",  relation: "Son",    age: 18, blood: "B+", uhid: "P10-F-3042" },
+  { name: "Kamla Sharma",  relation: "Mother", age: 72, blood: "O+", uhid: "P10-F-1205" },
 ];
 
 const VIDEO_CALLS = [
-  { patient: "Mrs. Deepa K.", time: "05:00 PM", id: "VC-2024-0891", duration: "15 min", status: "upcoming" },
+  { patient: "Mrs. Deepa K.",  time: "05:00 PM", id: "VC-2024-0891", duration: "15 min", status: "upcoming" },
   { patient: "Mr. Ajay Verma", time: "06:30 PM", id: "VC-2024-0892", duration: "20 min", status: "upcoming" },
   { patient: "Ms. Ritu Patel", time: "03:00 PM", id: "VC-2024-0890", duration: "12 min", status: "completed" },
 ];
 
-// ─── UTILS ────────────────────────────────────────────────────────────────────
-const Toast = ({ msg, visible, theme }: { msg: string; visible: boolean; theme: Theme }) => (
+// ─── HOSPITAL LOGO SVG ───────────────────────────────────────────────────────
+const HospitalLogo = ({ size = 56, glow = false }: { size?: number; glow?: boolean }) => (
   <div style={{
-    position: "absolute", bottom: 80, left: "50%", transform: `translateX(-50%) translateY(${visible ? 0 : 20}px)`,
-    background: theme.mode === 'dark' ? "#333" : "#1e293b",
-    color: "#fff",
-    padding: "10px 20px", borderRadius: 30, fontSize: 12, fontWeight: 600,
-    opacity: visible ? 1 : 0, transition: "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
-    pointerEvents: "none", zIndex: 100, whiteSpace: "nowrap",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.3)", display: "flex", alignItems: "center", gap: 8
+    width: size, height: size,
+    background: "linear-gradient(135deg,#1a3a6e,#2563eb)",
+    borderRadius: size * 0.28,
+    display: "flex", alignItems: "center", justifyContent: "center",
+    boxShadow: glow ? "0 0 50px rgba(37,99,235,0.6), inset 0 1px 1px rgba(255,255,255,0.2)" : "0 4px 16px rgba(37,99,235,0.3)",
+    flexShrink: 0,
   }}>
-    <span>ℹ️</span> {msg}
+    <svg width={size * 0.55} height={size * 0.55} viewBox="0 0 32 32" fill="none">
+      <rect x="13" y="3" width="6" height="26" rx="3" fill="white" opacity="0.95"/>
+      <rect x="3" y="13" width="26" height="6" rx="3" fill="white" opacity="0.95"/>
+    </svg>
   </div>
 );
 
-// ─── IPHONE FRAME ─────────────────────────────────────────────────────────────
-const StatusBar = ({ isDark }: { isDark: boolean }) => {
+// ─── DOCTOR AVATAR SVG ────────────────────────────────────────────────────────
+const DoctorAvatar = ({ size = 46 }: { size?: number }) => (
+  <div style={{
+    width: size, height: size,
+    background: "rgba(255,255,255,0.15)",
+    borderRadius: size * 0.28,
+    display: "flex", alignItems: "center", justifyContent: "center",
+    flexShrink: 0, overflow: "hidden",
+  }}>
+    <svg width={size * 0.72} height={size * 0.72} viewBox="0 0 40 40" fill="none">
+      <circle cx="20" cy="13" r="7" fill="rgba(255,255,255,0.85)"/>
+      <path d="M6 36c0-7.732 6.268-14 14-14s14 6.268 14 14" stroke="rgba(255,255,255,0.85)" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+      <path d="M17 30l1.5 3 1.5-1.5 1.5 1.5 1.5-3" stroke="#93c5fd" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    </svg>
+  </div>
+);
+
+// ─── PATIENT AVATAR SVG ───────────────────────────────────────────────────────
+const PatientAvatar = ({ size = 46 }: { size?: number }) => (
+  <div style={{
+    width: size, height: size,
+    background: "rgba(255,255,255,0.15)",
+    borderRadius: size * 0.28,
+    display: "flex", alignItems: "center", justifyContent: "center",
+    flexShrink: 0,
+  }}>
+    <svg width={size * 0.68} height={size * 0.68} viewBox="0 0 40 40" fill="none">
+      <circle cx="20" cy="13" r="7" fill="rgba(255,255,255,0.85)"/>
+      <path d="M6 36c0-7.732 6.268-14 14-14s14 6.268 14 14" stroke="rgba(255,255,255,0.85)" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+    </svg>
+  </div>
+);
+
+// ─── STATUS BAR ──────────────────────────────────────────────────────────────
+const StatusBar = ({ theme }: { theme: ThemeMode }) => {
   const [time, setTime] = useState("");
   useEffect(() => {
     const update = () => {
       const now = new Date();
-      setTime(now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true }));
+      setTime(now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false }));
     };
     update();
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
   }, []);
 
-  const color = isDark ? "#fff" : "#000";
+  const iconColor = theme === "light" ? "#0f1f3d" : "#ffffff";
+  const bgColor   = theme === "light" ? "rgba(240,244,255,0.95)" : "rgba(0,0,0,0.0)";
 
   return (
-    <div style={{ background: isDark ? "rgba(10,22,40,0.95)" : "rgba(255,255,255,0.9)", backdropFilter: "blur(10px)" }}
-      className="flex items-center justify-between px-6 pt-3 pb-1 h-10 flex-shrink-0 z-50">
-      <span className="text-xs font-semibold" style={{ color }}>{time}</span>
-      <div className="flex items-center gap-1.5">
-        {/* Signal Bars */}
-        <div className="flex items-end gap-0.5">
-          {[3, 5, 7, 9].map((h, i) => (
-            <div key={i} style={{ width: 3, height: h, background: isDark ? (i < 3 ? "#93c5fd" : "rgba(147,197,253,0.3)") : (i < 3 ? "#000" : "rgba(0,0,0,0.2)"), borderRadius: 1 }} />
+    <div style={{ background: bgColor, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", height: 44, flexShrink: 0, position: "relative" }}>
+      <span style={{ color: iconColor, fontSize: 15, fontWeight: 700, letterSpacing: 0.3, fontFamily: "'Playfair Display', Georgia, serif" }}>{time}</span>
+      <div style={{ width: 126, height: 34, background: "#000", borderRadius: 20, position: "absolute", left: "50%", transform: "translateX(-50%)", top: 5, zIndex: 10, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+        <div style={{ width: 10, height: 10, background: "#1a1a1a", borderRadius: "50%" }} />
+        <div style={{ width: 12, height: 12, background: "#111", borderRadius: "50%", border: "2px solid #222" }} />
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 1.5 }}>
+          {[6, 9, 12, 15].map((h, i) => (
+            <div key={i} style={{ width: 3, height: h, background: i < 3 ? iconColor : `${iconColor}40`, borderRadius: 1.5 }} />
           ))}
         </div>
-        <span className="text-[9px] font-medium ml-0.5" style={{ color }}>5G</span>
-        {/* WiFi */}
-        <svg width="14" height="11" viewBox="0 0 14 11" fill="none" className="ml-0.5">
-          <path d="M7 9.5C7.55 9.5 8 9.05 8 8.5C8 7.95 7.55 7.5 7 7.5C6.45 7.5 6 7.95 6 8.5C6 9.05 6.45 9.5 7 9.5Z" fill={color} />
-          <path d="M7 5.5C8.66 5.5 10.14 6.16 11.24 7.24L12.66 5.82C11.17 4.35 9.19 3.5 7 3.5C4.81 3.5 2.83 4.35 1.34 5.82L2.76 7.24C3.86 6.16 5.34 5.5 7 5.5Z" fill={color} opacity="0.7" />
-          <path d="M7 1.5C9.76 1.5 12.24 2.6 14 4.42L15.41 3C13.27 0.86 10.29 0 7 0C3.71 0 0.73 0.86-1.41 3L0 4.42C1.76 2.6 4.24 1.5 7 1.5Z" fill={color} opacity="0.4" />
+        <span style={{ color: iconColor, fontSize: 10, fontWeight: 600 }}>5G</span>
+        <svg width="15" height="12" viewBox="0 0 15 12" fill="none">
+          <circle cx="7.5" cy="10.5" r="1.2" fill={iconColor} />
+          <path d="M4.8 8C5.7 7 6.6 6.5 7.5 6.5C8.4 6.5 9.3 7 10.2 8" stroke={iconColor} strokeWidth="1.4" strokeLinecap="round" fill="none" opacity="0.8"/>
+          <path d="M2.5 5.5C4.2 3.8 5.8 3 7.5 3C9.2 3 10.8 3.8 12.5 5.5" stroke={iconColor} strokeWidth="1.4" strokeLinecap="round" fill="none" opacity="0.55"/>
         </svg>
-        {/* Battery with charging bolt */}
-        <div className="flex items-center ml-0.5">
-          <div style={{ width: 22, height: 11, border: `1.5px solid ${isDark ? "rgba(147,197,253,0.8)" : "rgba(0,0,0,0.5)"}`, borderRadius: 2.5, position: "relative", padding: "1px" }}>
-            <div style={{ width: "75%", height: "100%", background: "linear-gradient(90deg,#34d399,#10b981)", borderRadius: 1.5 }} />
-            <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", color: isDark ? "#fff" : "#fff", fontSize: 7, fontWeight: 700 }}>⚡</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <div style={{ width: 24, height: 12, border: `1.5px solid ${iconColor}`, borderRadius: 3, padding: 1.5, position: "relative" }}>
+            <div style={{ width: "75%", height: "100%", background: "#22c55e", borderRadius: 1.5 }} />
+            <Zap size={6} style={{ position: "absolute", inset: 0, margin: "auto", color: "#fff" }} />
           </div>
-          <div style={{ width: 2, height: 5, background: isDark ? "rgba(147,197,253,0.6)" : "rgba(0,0,0,0.5)", borderRadius: "0 1px 1px 0", marginLeft: -0.5 }} />
+          <div style={{ width: 2, height: 5, background: `${iconColor}60`, borderRadius: "0 1px 1px 0" }} />
         </div>
       </div>
     </div>
   );
 };
 
-const DynamicIsland = () => (
-  <div className="flex justify-center pt-2 pb-1 flex-shrink-0 z-50" style={{ background: "transparent" }}>
-    <div style={{ width: 120, height: 34, background: "#000", borderRadius: 20, border: "1px solid #1a1a1a" }} className="flex items-center justify-center">
-      <div style={{ width: 8, height: 8, background: "#1a1a1a", borderRadius: "50%", marginRight: 32 }} />
-      <div style={{ width: 8, height: 8, background: "#111", borderRadius: "50%" }} />
-    </div>
-  </div>
-);
-
-// ─── SHARED COMPONENTS ─────────────────────────────────────────────────────────
+// ─── STATUS BADGE ─────────────────────────────────────────────────────────────
 const StatusBadge = ({ status }: { status: string }) => {
   const colors: Record<string, string> = {
     "In-Progress": "linear-gradient(135deg,#f59e0b,#fbbf24)",
-    "Waiting": "linear-gradient(135deg,#2563eb,#3b82f6)",
-    "Checked In": "linear-gradient(135deg,#10b981,#34d399)",
-    "Completed": "linear-gradient(135deg,#6366f1,#818cf8)",
-    "No-Show": "linear-gradient(135deg,#ef4444,#f87171)",
-    "Critical": "linear-gradient(135deg,#dc2626,#ef4444)",
-    "Stable": "linear-gradient(135deg,#059669,#10b981)",
+    "Waiting":     "linear-gradient(135deg,#2563eb,#3b82f6)",
+    "Checked In":  "linear-gradient(135deg,#10b981,#34d399)",
+    "Completed":   "linear-gradient(135deg,#6366f1,#818cf8)",
+    "No-Show":     "linear-gradient(135deg,#ef4444,#f87171)",
+    "Critical":    "linear-gradient(135deg,#dc2626,#ef4444)",
+    "Stable":      "linear-gradient(135deg,#059669,#10b981)",
   };
+  const isCritical = status === "Critical";
   return (
-    <span style={{ background: colors[status] || "#374151", fontSize: 9, padding: "2px 7px", borderRadius: 10, color: "#fff", fontWeight: 600, whiteSpace: "nowrap" }}>
+    <span style={{
+      background: colors[status] || "#374151",
+      fontSize: 9, padding: "2px 7px", borderRadius: 10, color: "#fff", fontWeight: 600,
+      whiteSpace: "nowrap", fontFamily: "'Libre Baskerville', Georgia, serif",
+      animation: isCritical ? "criticalPulse 1.5s ease-in-out infinite" : "none",
+      display: "inline-block",
+    }}>
       {status}
     </span>
   );
 };
 
-const SectionHeader = ({ title, subtitle, onBack, theme }: { title: string; subtitle?: string; onBack?: () => void; theme: Theme }) => (
-  <div className="flex items-center gap-3 px-4 py-3 flex-shrink-0" style={{ background: theme.headerBg, borderBottom: `1px solid ${theme.cardBorder}` }}>
-    {onBack && (
-      <button onClick={onBack} style={{ background: theme.iconBg, borderRadius: 10, padding: "6px 8px", border: "none", color: theme.accent, cursor: "pointer", fontSize: 14 }}>
-        ←
-      </button>
-    )}
-    <div>
-      <div className="font-bold text-sm" style={{ color: theme.text }}>{title}</div>
-      {subtitle && <div className="text-xs opacity-70" style={{ color: theme.textSec }}>{subtitle}</div>}
-    </div>
-  </div>
-);
-
-const QuickStatCard = ({ label, value, icon, color, theme }: { label: string; value: string | number; icon: string; color: string; theme: Theme }) => (
-  <div className="rounded-2xl p-3 flex flex-col items-center gap-1 shadow-card" style={{ minWidth: 0, background: theme.cardBg, boxShadow: theme.mode === 'light' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none' }}>
-    <div style={{ background: color, borderRadius: 12, padding: "8px", fontSize: 18 }}>{icon}</div>
-    <div className="font-bold text-lg leading-none" style={{ color: theme.text }}>{value}</div>
-    <div className="text-xs text-center leading-tight opacity-80" style={{ color: theme.textSec }}>{label}</div>
-  </div>
-);
-
-// ─── SPLASH SCREEN ─────────────────────────────────────────────────────────────
-const SplashScreen = ({ onDone, theme }: { onDone: () => void; theme: Theme }) => {
-  useEffect(() => { const t = setTimeout(onDone, 2800); return () => clearTimeout(t); }, [onDone]);
+// ─── SECTION HEADER ───────────────────────────────────────────────────────────
+const SectionHeader = ({ title, subtitle, onBack, theme }: { title: string; subtitle?: string; onBack?: () => void; theme: ThemeMode }) => {
+  const t = THEMES[theme];
   return (
-    <div className="flex flex-col items-center justify-center h-full" style={{ background: theme.bg }}>
-      <div className="flex flex-col items-center gap-6 animate-fadeInUp">
-        <div style={{ width: 90, height: 90, background: "linear-gradient(135deg,#1a3a6e,#2563eb)", borderRadius: 28, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 40px rgba(37,99,235,0.5)" }}>
-          <span style={{ fontSize: 44 }}>🏥</span>
-        </div>
-        <div className="text-center">
-          <div className="font-black text-2xl tracking-tight" style={{ color: theme.text }}>MedCore Pro</div>
-          <div style={{ color: theme.accent, fontSize: 12, letterSpacing: 3, marginTop: 2, fontWeight: 500 }}>PROJECT 10</div>
-          <div style={{ color: theme.textSec, fontSize: 10, marginTop: 6 }}>Excellence in Healthcare</div>
-        </div>
-        <div style={{ width: 160, height: 3, background: theme.cardBorder, borderRadius: 2, overflow: "hidden", marginTop: 16 }}>
-          <div className="shimmer" style={{ width: "100%", height: "100%", background: "linear-gradient(90deg,transparent,#2563eb,#06b6d4,transparent)", animation: "shimmer 1.5s infinite" }} />
-        </div>
-        <div style={{ color: theme.textSec, fontSize: 10 }}>Powered by AI Healthcare</div>
-      </div>
-      <div style={{ position: "absolute", bottom: 60, display: "flex", gap: 6 }}>
-        {[0, 1, 2].map(i => <div key={i} style={{ width: 6, height: 6, borderRadius: "50%", background: i === 1 ? "#2563eb" : theme.cardBorder }} />)}
+    <div className="flex items-center gap-3 px-4 py-3 flex-shrink-0" style={{ background: t.headerBg, borderBottom: `1px solid ${t.border}`, animation: "fadeInDown 0.3s ease-out" }}>
+      {onBack && (
+        <button onClick={onBack} style={{ background: "rgba(255,255,255,0.15)", borderRadius: 10, padding: "6px 8px", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 3, backdropFilter: "blur(8px)", transition: "background 0.15s" }}
+          onMouseDown={e => (e.currentTarget.style.background = "rgba(255,255,255,0.25)")}
+          onMouseUp={e => (e.currentTarget.style.background = "rgba(255,255,255,0.15)")}>
+          <ChevronLeft size={14} color="#fff" />
+        </button>
+      )}
+      <div>
+        <div style={{ color: "#fff", fontWeight: 700, fontSize: 14, fontFamily: "'Playfair Display', Georgia, serif" }}>{title}</div>
+        {subtitle && <div style={{ color: "rgba(255,255,255,0.65)", fontSize: 10, marginTop: 1, fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic" }}>{subtitle}</div>}
       </div>
     </div>
   );
 };
 
-// ─── ROLE SELECTION ─────────────────────────────────────────────────────────────
-const RoleSelection = ({ onSelect, theme }: { onSelect: (r: Role) => void; theme: Theme }) => (
-  <div className="flex flex-col items-center justify-center h-full px-6 gap-8" style={{ background: theme.bg }}>
-    <div className="text-center animate-fadeInUp">
-      <div style={{ fontSize: 40, marginBottom: 8 }}>🏥</div>
-      <div className="font-black text-xl" style={{ color: theme.text }}>Welcome to</div>
-      <div style={{ color: theme.accent, fontWeight: 800, fontSize: 22 }}>Project 10</div>
-      <div style={{ color: theme.textSec, fontSize: 11, marginTop: 4 }}>Select your role to continue</div>
+// ─── QUICK STAT CARD ─────────────────────────────────────────────────────────
+const QuickStatCard = ({ label, value, IconComp, color, theme }: { label: string; value: string | number; IconComp: React.ElementType; color: string; theme: ThemeMode }) => {
+  const t = THEMES[theme];
+  const isLight = theme === "light";
+  return (
+    <div style={{ background: t.statCard, border: `1px solid ${t.border}`, borderRadius: 16, padding: "10px 6px", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, boxShadow: isLight ? "0 2px 8px rgba(30,70,160,0.08)" : "0 2px 8px rgba(0,0,0,0.3)", animation: "countUp 0.5s ease-out", transition: "transform 0.15s, box-shadow 0.15s" }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "scale(1.03)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 6px 20px rgba(37,99,235,0.2)"; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "scale(1)"; (e.currentTarget as HTMLElement).style.boxShadow = isLight ? "0 2px 8px rgba(30,70,160,0.08)" : "0 2px 8px rgba(0,0,0,0.3)"; }}>
+      <div style={{ background: color, borderRadius: 10, padding: "7px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <IconComp size={16} color="#fff" />
+      </div>
+      <div style={{ color: t.text, fontWeight: 800, fontSize: 15, lineHeight: 1, fontFamily: "'Playfair Display', Georgia, serif" }}>{value}</div>
+      <div style={{ color: t.subText, fontSize: 8.5, textAlign: "center", lineHeight: "1.2", fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{label}</div>
     </div>
-    <div className="flex flex-col gap-4 w-full">
+  );
+};
+
+// ─── THEME SWITCHER ───────────────────────────────────────────────────────────
+const ThemeSwitcher = ({ theme, setTheme }: { theme: ThemeMode; setTheme: (t: ThemeMode) => void }) => {
+  const opts: { id: ThemeMode; Icon: React.ElementType; label: string }[] = [
+    { id: "light",    Icon: Sun,    label: "Light" },
+    { id: "semidark", Icon: Sunset, label: "Mid"   },
+    { id: "dark",     Icon: Moon,   label: "Dark"  },
+  ];
+  return (
+    <div style={{ display: "flex", background: "rgba(0,0,0,0.15)", borderRadius: 12, padding: 3, gap: 2 }}>
+      {opts.map(opt => (
+        <button key={opt.id} onClick={() => setTheme(opt.id)}
+          style={{ background: theme === opt.id ? "rgba(255,255,255,0.25)" : "transparent", border: "none", borderRadius: 9, padding: "4px 8px", cursor: "pointer", color: "#fff", fontSize: 9, fontWeight: theme === opt.id ? 700 : 400, display: "flex", alignItems: "center", gap: 2, transition: "background 0.2s", fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+          <opt.Icon size={10} color="#fff" />
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+};
+
+// ─── SPLASH SCREEN ────────────────────────────────────────────────────────────
+const SplashScreen = ({ onDone }: { onDone: () => void }) => {
+  useEffect(() => { const t = setTimeout(onDone, 3000); return () => clearTimeout(t); }, [onDone]);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", background: "linear-gradient(135deg,#0a1628 0%,#1a3a6e 50%,#0f2347 100%)" }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 22, animation: "fadeInUp 0.6s ease-out forwards" }}>
+        <div style={{ animation: "scaleIn 0.7s ease-out" }}>
+          <HospitalLogo size={96} glow />
+        </div>
+        <div style={{ textAlign: "center", animation: "fadeInUp 0.6s 0.2s ease-out both" }}>
+          <div style={{ color: "#ffffff", fontWeight: 900, fontSize: 26, letterSpacing: 1, textShadow: "0 2px 12px rgba(37,99,235,0.5)", fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic" }}>PROJECT 10 HOSPITAL</div>
+          <div style={{ color: "#93c5fd", fontSize: 11, letterSpacing: 4, marginTop: 6, fontWeight: 500, fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic" }}>EXCELLENCE IN HEALTHCARE</div>
+          <div style={{ color: "rgba(147,197,253,0.55)", fontSize: 10, marginTop: 6, fontFamily: "'Libre Baskerville', Georgia, serif" }}>Bangalore · Est. 1985 · NABH Accredited</div>
+        </div>
+        <div style={{ width: 160, height: 3, background: "rgba(147,197,253,0.15)", borderRadius: 2, overflow: "hidden", marginTop: 4 }}>
+          <div style={{ width: "100%", height: "100%", background: "linear-gradient(90deg,transparent,#2563eb,#06b6d4,transparent)", animation: "shimmer 1.5s infinite" }} />
+        </div>
+        <div style={{ color: "rgba(147,197,253,0.45)", fontSize: 10, fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", animation: "fadeIn 0.6s 0.5s ease-out both" }}>Powered by AI Healthcare Platform</div>
+      </div>
+      <div style={{ position: "absolute", bottom: 60, display: "flex", gap: 6 }}>
+        {[0,1,2].map(i => <div key={i} style={{ width: 6, height: 6, borderRadius: "50%", background: i === 1 ? "#2563eb" : "rgba(147,197,253,0.3)", transition: "all 0.3s" }} />)}
+      </div>
+    </div>
+  );
+};
+
+// ─── ROLE SELECTION ───────────────────────────────────────────────────────────
+const RoleSelection = ({ onSelect }: { onSelect: (r: Role) => void }) => (
+  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", background: "linear-gradient(135deg,#0a1628 0%,#1a3a6e 50%,#0f2347 100%)", padding: "0 24px", gap: 28 }}>
+    <div style={{ textAlign: "center", animation: "fadeInUp 0.4s ease-out" }}>
+      <HospitalLogo size={68} glow />
+      <div style={{ color: "#ffffff", fontWeight: 700, fontSize: 16, marginTop: 16, fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic" }}>Welcome to</div>
+      <div style={{ color: "#93c5fd", fontWeight: 800, fontSize: 24, fontFamily: "'Playfair Display', Georgia, serif" }}>Project 10 Hospital</div>
+      <div style={{ color: "rgba(147,197,253,0.5)", fontSize: 11, marginTop: 4, fontFamily: "'Libre Baskerville', Georgia, serif" }}>Select your role to continue</div>
+    </div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 14, width: "100%", animation: "fadeInUp 0.4s 0.1s ease-out both" }}>
       {[
-        { role: "doctor" as Role, emoji: "👨‍⚕️", title: "Doctor / Staff", sub: "Access OPD, IPD, Prescriptions & Analytics", color: "linear-gradient(135deg,#1a3a6e,#2563eb)" },
-        { role: "patient" as Role, emoji: "👤", title: "Patient", sub: "Book appointments, records, pharmacy & more", color: "linear-gradient(135deg,#0c4a6e,#0ea5e9)" },
-      ].map(({ role, emoji, title, sub, color }) => (
+        { role: "doctor" as Role, Icon: Stethoscope, title: "Doctor / Staff", sub: "Access OPD, IPD, Prescriptions & Analytics", color: "linear-gradient(135deg,#1a3a6e,#2563eb)" },
+        { role: "patient" as Role, Icon: UserCheck, title: "Patient", sub: "Book appointments, records, pharmacy & more", color: "linear-gradient(135deg,#0c4a6e,#0ea5e9)" },
+      ].map(({ role, Icon, title, sub, color }) => (
         <button key={role} onClick={() => onSelect(role)}
-          style={{ background: color, border: `1px solid ${theme.cardBorder}`, borderRadius: 20, padding: "20px", display: "flex", alignItems: "center", gap: 16, cursor: "pointer", boxShadow: "0 8px 32px rgba(37,99,235,0.3)", transition: "transform 0.15s" }}
-          onMouseDown={e => (e.currentTarget.style.transform = "scale(0.97)")}
-          onMouseUp={e => (e.currentTarget.style.transform = "scale(1)")}>
-          <div style={{ fontSize: 40, background: "rgba(255,255,255,0.1)", borderRadius: 16, padding: 12 }}>{emoji}</div>
+          style={{ background: color, border: "1px solid rgba(255,255,255,0.15)", borderRadius: 20, padding: "20px", display: "flex", alignItems: "center", gap: 16, cursor: "pointer", boxShadow: "0 8px 32px rgba(37,99,235,0.3)", transition: "transform 0.15s, box-shadow 0.15s" }}
+          onMouseDown={e => { (e.currentTarget as HTMLElement).style.transform = "scale(0.97)"; }}
+          onMouseUp={e => { (e.currentTarget as HTMLElement).style.transform = "scale(1)"; }}>
+          <div style={{ background: "rgba(255,255,255,0.12)", borderRadius: 16, padding: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icon size={32} color="#fff" strokeWidth={1.5} />
+          </div>
           <div style={{ textAlign: "left" }}>
-            <div style={{ color: "#fff", fontWeight: 700, fontSize: 16 }}>{title}</div>
-            <div style={{ color: "rgba(255,255,255,0.8)", fontSize: 11, marginTop: 4 }}>{sub}</div>
+            <div style={{ color: "#ffffff", fontWeight: 700, fontSize: 16, fontFamily: "'Playfair Display', Georgia, serif" }}>{title}</div>
+            <div style={{ color: "rgba(255,255,255,0.65)", fontSize: 11, marginTop: 4, fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic" }}>{sub}</div>
           </div>
         </button>
       ))}
     </div>
-    <div style={{ color: theme.textSec, fontSize: 10, textAlign: "center" }}>
-      🔒 256-bit AES Encrypted · HIPAA Compliant
+    <div style={{ color: "rgba(147,197,253,0.4)", fontSize: 10, textAlign: "center", display: "flex", alignItems: "center", gap: 5, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+      <Lock size={10} color="rgba(147,197,253,0.4)" /> 256-bit AES Encrypted · HIPAA Compliant
     </div>
   </div>
 );
 
-// ─── LOGIN SCREEN ──────────────────────────────────────────────────────────────
-const LoginScreen = ({ role, onLogin, onBack, theme }: { role: Role; onLogin: () => void; onBack: () => void; theme: Theme }) => {
+// ─── LOGIN SCREEN ─────────────────────────────────────────────────────────────
+const LoginScreen = ({ role, onLogin, onBack }: { role: Role; onLogin: () => void; onBack: () => void }) => {
   const [method, setMethod] = useState<"phone" | "email">("phone");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
-
   return (
-    <div className="flex flex-col h-full" style={{ background: theme.bg }}>
-      <div style={{ background: theme.headerBg, padding: "20px 20px 30px", position: "relative" }}>
-        <button onClick={onBack} style={{ background: theme.iconBg, border: "none", color: theme.accent, borderRadius: 10, padding: "6px 12px", cursor: "pointer", fontSize: 12, marginBottom: 16 }}>← Back</button>
-        <div style={{ fontSize: 28, marginBottom: 8 }}>{role === "doctor" ? "👨‍⚕️" : "👤"}</div>
-        <div style={{ color: theme.text, fontWeight: 800, fontSize: 20 }}>{role === "doctor" ? "Doctor Login" : "Patient Login"}</div>
-        <div style={{ color: theme.textSec, fontSize: 11, marginTop: 4 }}>Project 10 — Secure Access Portal</div>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "linear-gradient(135deg,#0a1628 0%,#1a3a6e 50%,#0f2347 100%)" }}>
+      <div style={{ background: "linear-gradient(135deg,#0a1628,#1a3a6e)", padding: "20px 20px 30px", animation: "fadeInDown 0.4s ease-out" }}>
+        <button onClick={onBack} style={{ background: "rgba(255,255,255,0.12)", border: "none", color: "#ffffff", borderRadius: 10, padding: "6px 12px", cursor: "pointer", fontSize: 12, marginBottom: 16, display: "flex", alignItems: "center", gap: 4, transition: "background 0.15s" }}
+          onMouseDown={e => (e.currentTarget.style.background = "rgba(255,255,255,0.22)")}
+          onMouseUp={e => (e.currentTarget.style.background = "rgba(255,255,255,0.12)")}>
+          <ChevronLeft size={14} color="#fff" /> Back
+        </button>
+        <div style={{ marginBottom: 10, display: "flex", alignItems: "center" }}>
+          {role === "doctor" ? <Stethoscope size={32} color="#93c5fd" strokeWidth={1.5} /> : <UserCheck size={32} color="#93c5fd" strokeWidth={1.5} />}
+        </div>
+        <div style={{ color: "#ffffff", fontWeight: 800, fontSize: 20, fontFamily: "'Playfair Display', Georgia, serif" }}>{role === "doctor" ? "Doctor Login" : "Patient Login"}</div>
+        <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 11, marginTop: 4, fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic" }}>Project 10 Hospital — Secure Access Portal</div>
       </div>
-
-      <div className="flex-1 overflow-y-auto no-scrollbar px-5 py-6 flex flex-col gap-5">
-        {/* Method Toggle */}
-        <div style={{ background: theme.inputBg, borderRadius: 14, padding: 4, display: "flex", gap: 4 }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 24px", display: "flex", flexDirection: "column", gap: 16, msOverflowStyle: "none" as any }} className="no-scrollbar">
+        <div style={{ height: 8 }} />
+        <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: 14, padding: 4, display: "flex", gap: 4 }}>
           {(["phone", "email"] as const).map(m => (
             <button key={m} onClick={() => setMethod(m)}
-              style={{
-                flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600,
-                background: method === m ? "linear-gradient(135deg,#2563eb,#1d4ed8)" : "transparent",
-                color: method === m ? "#fff" : theme.textSec
-              }}>
-              {m === "phone" ? "📱 Phone" : "✉️ Email"}
+              style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, background: method === m ? "linear-gradient(135deg,#2563eb,#1d4ed8)" : "transparent", color: method === m ? "#ffffff" : "rgba(255,255,255,0.5)", display: "flex", alignItems: "center", justifyContent: "center", gap: 5, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+              {m === "phone" ? <Phone size={12} /> : <Send size={12} />}
+              {m === "phone" ? "Phone" : "Email"}
             </button>
           ))}
         </div>
-
         {method === "phone" ? (
           <div>
-            <label style={{ color: theme.accent, fontSize: 11, fontWeight: 600, display: "block", marginBottom: 6 }}>MOBILE NUMBER</label>
+            <label style={{ color: "#93c5fd", fontSize: 10, fontWeight: 600, display: "block", marginBottom: 6, letterSpacing: 1, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>MOBILE NUMBER</label>
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <div style={{ background: theme.inputBg, border: `1px solid ${theme.inputBorder}`, borderRadius: 12, padding: "12px 14px", color: theme.accent, fontSize: 13, fontWeight: 600, minWidth: 56 }}>+91</div>
+              <div style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 12, padding: "12px 14px", color: "#ffffff", fontSize: 13, fontWeight: 600, minWidth: 56, fontFamily: "'Playfair Display', Georgia, serif" }}>+91</div>
               <input value={phone} onChange={e => setPhone(e.target.value.slice(0, 10))} placeholder="Enter 10-digit number"
-                style={{ flex: 1, background: theme.inputBg, border: `1px solid ${theme.inputBorder}`, borderRadius: 12, padding: "12px 14px", color: theme.text, fontSize: 14, outline: "none" }}
+                style={{ flex: 1, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 12, padding: "12px 14px", color: "#ffffff", fontSize: 14, outline: "none", fontFamily: "'Libre Baskerville', Georgia, serif" }}
                 type="tel" inputMode="numeric" />
             </div>
           </div>
         ) : (
-          <div className="flex flex-col gap-4">
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div>
-              <label style={{ color: theme.accent, fontSize: 11, fontWeight: 600, display: "block", marginBottom: 6 }}>EMAIL ADDRESS</label>
+              <label style={{ color: "#93c5fd", fontSize: 10, fontWeight: 600, display: "block", marginBottom: 6, letterSpacing: 1, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>EMAIL ADDRESS</label>
               <input value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" type="email"
-                style={{ width: "100%", background: theme.inputBg, border: `1px solid ${theme.inputBorder}`, borderRadius: 12, padding: "12px 14px", color: theme.text, fontSize: 14, outline: "none", boxSizing: "border-box" }} />
+                style={{ width: "100%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 12, padding: "12px 14px", color: "#ffffff", fontSize: 14, outline: "none", boxSizing: "border-box", fontFamily: "'Libre Baskerville', Georgia, serif" }} />
             </div>
             <div>
-              <label style={{ color: theme.accent, fontSize: 11, fontWeight: 600, display: "block", marginBottom: 6 }}>PASSWORD</label>
+              <label style={{ color: "#93c5fd", fontSize: 10, fontWeight: 600, display: "block", marginBottom: 6, letterSpacing: 1, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>PASSWORD</label>
               <input value={pass} onChange={e => setPass(e.target.value)} placeholder="Enter password" type="password"
-                style={{ width: "100%", background: theme.inputBg, border: `1px solid ${theme.inputBorder}`, borderRadius: 12, padding: "12px 14px", color: theme.text, fontSize: 14, outline: "none", boxSizing: "border-box" }} />
+                style={{ width: "100%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 12, padding: "12px 14px", color: "#ffffff", fontSize: 14, outline: "none", boxSizing: "border-box", fontFamily: "'Libre Baskerville', Georgia, serif" }} />
             </div>
           </div>
         )}
-
         <button onClick={onLogin}
-          style={{ background: "linear-gradient(135deg,#2563eb,#1d4ed8)", color: "#fff", border: "none", borderRadius: 14, padding: "14px", fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: "0 8px 24px rgba(37,99,235,0.4)", width: "100%" }}>
+          style={{ background: "linear-gradient(135deg,#2563eb,#1d4ed8)", color: "#ffffff", border: "none", borderRadius: 14, padding: "14px", fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: "0 8px 24px rgba(37,99,235,0.4)", width: "100%", fontFamily: "'Playfair Display', Georgia, serif", transition: "transform 0.12s, box-shadow 0.12s" }}
+          onMouseDown={e => { (e.currentTarget as HTMLElement).style.transform = "scale(0.97)"; }}
+          onMouseUp={e => { (e.currentTarget as HTMLElement).style.transform = "scale(1)"; }}>
           {method === "phone" ? "Send OTP →" : "Login Securely →"}
         </button>
-
-        {/* Biometric */}
         <div style={{ textAlign: "center" }}>
-          <div style={{ color: theme.textSec, fontSize: 11, marginBottom: 12 }}>— OR —</div>
-          <button onClick={onLogin} style={{ background: theme.inputBg, border: `1px solid ${theme.inputBorder}`, borderRadius: 14, padding: "12px 24px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, margin: "0 auto", color: theme.accent, fontSize: 12, fontWeight: 600 }}>
-            <span style={{ fontSize: 20 }}>👆</span> Biometric / Face ID Login
+          <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 11, marginBottom: 12, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>— OR —</div>
+          <button onClick={onLogin} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 14, padding: "12px 24px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, margin: "0 auto", color: "#ffffff", fontSize: 12, fontWeight: 600, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+            <Fingerprint size={20} color="#93c5fd" /> Biometric / Face ID Login
           </button>
         </div>
-
-        {/* Google */}
-        <button onClick={onLogin} style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: 14, padding: "12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10, width: "100%", color: theme.text, fontSize: 12, fontWeight: 600 }}>
-          <span style={{ fontSize: 18 }}>🇬</span> Continue with Google / Gmail
-        </button>
-
-        <div style={{ color: theme.textSec, fontSize: 10, textAlign: "center", marginTop: 8 }}>
+        <div style={{ color: "rgba(255,255,255,0.25)", fontSize: 10, textAlign: "center", fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic" }}>
           By continuing, you agree to our Terms & Privacy Policy
         </div>
       </div>
@@ -379,35 +513,33 @@ const LoginScreen = ({ role, onLogin, onBack, theme }: { role: Role; onLogin: ()
   );
 };
 
-// ─── OTP SCREEN ────────────────────────────────────────────────────────────────
-const OTPScreen = ({ onVerify, onBack, theme }: { role: Role; onVerify: () => void; onBack: () => void; theme: Theme }) => {
+// ─── OTP SCREEN ───────────────────────────────────────────────────────────────
+const OTPScreen = ({ onVerify, onBack }: { role: Role; onVerify: () => void; onBack: () => void }) => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const handleChange = (val: string, idx: number) => {
-    const newOtp = [...otp];
-    newOtp[idx] = val.slice(-1);
-    setOtp(newOtp);
-  };
-
   return (
-    <div className="flex flex-col h-full px-5 py-6 gap-6" style={{ background: theme.bg }}>
-      <button onClick={onBack} style={{ background: theme.iconBg, border: "none", color: theme.accent, borderRadius: 10, padding: "6px 12px", cursor: "pointer", fontSize: 12, alignSelf: "flex-start" }}>← Back</button>
-      <div className="flex flex-col items-center gap-3 text-center">
-        <div style={{ fontSize: 48 }}>📱</div>
-        <div style={{ color: theme.text, fontWeight: 800, fontSize: 18 }}>OTP Verification</div>
-        <div style={{ color: theme.textSec, fontSize: 12 }}>Enter the 6-digit code sent to<br />+91 98765 43210</div>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "linear-gradient(135deg,#0a1628 0%,#1a3a6e 50%,#0f2347 100%)", padding: "24px 20px", gap: 24, animation: "fadeIn 0.35s ease-out" }}>
+      <button onClick={onBack} style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "#ffffff", borderRadius: 10, padding: "6px 12px", cursor: "pointer", fontSize: 12, alignSelf: "flex-start", display: "flex", alignItems: "center", gap: 4, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+        <ChevronLeft size={14} color="#fff" /> Back
+      </button>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, textAlign: "center" }}>
+        <div style={{ background: "rgba(37,99,235,0.2)", borderRadius: 24, padding: 18, border: "1px solid rgba(37,99,235,0.3)" }}>
+          <Phone size={36} color="#93c5fd" strokeWidth={1.5} />
+        </div>
+        <div style={{ color: "#ffffff", fontWeight: 800, fontSize: 18, fontFamily: "'Playfair Display', Georgia, serif" }}>OTP Verification</div>
+        <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 12, fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic" }}>Enter the 6-digit code sent to<br/>+91 98765 43210</div>
       </div>
-      <div className="flex justify-center gap-2">
+      <div style={{ display: "flex", justifyContent: "center", gap: 8 }}>
         {otp.map((val, idx) => (
-          <input key={idx} value={val} onChange={e => handleChange(e.target.value, idx)} maxLength={1} type="tel" inputMode="numeric"
-            style={{ width: 42, height: 52, textAlign: "center", background: theme.inputBg, border: `2px solid ${val ? "#2563eb" : theme.inputBorder}`, borderRadius: 12, color: theme.text, fontSize: 20, fontWeight: 700, outline: "none", transition: "border 0.2s" }} />
+          <input key={idx} value={val} onChange={e => { const n = [...otp]; n[idx] = e.target.value.slice(-1); setOtp(n); }} maxLength={1} type="tel" inputMode="numeric"
+            style={{ width: 42, height: 52, textAlign: "center", background: "rgba(255,255,255,0.1)", border: `2px solid ${val ? "#2563eb" : "rgba(255,255,255,0.2)"}`, borderRadius: 12, color: "#ffffff", fontSize: 20, fontWeight: 700, outline: "none", transition: "border 0.2s", fontFamily: "'Playfair Display', Georgia, serif" }} />
         ))}
       </div>
       <button onClick={onVerify}
-        style={{ background: "linear-gradient(135deg,#2563eb,#1d4ed8)", color: "#fff", border: "none", borderRadius: 14, padding: "14px", fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: "0 8px 24px rgba(37,99,235,0.4)" }}>
+        style={{ background: "linear-gradient(135deg,#2563eb,#1d4ed8)", color: "#ffffff", border: "none", borderRadius: 14, padding: "14px", fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: "0 8px 24px rgba(37,99,235,0.4)", fontFamily: "'Playfair Display', Georgia, serif" }}>
         Verify & Login →
       </button>
-      <div style={{ textAlign: "center", color: theme.textSec, fontSize: 11 }}>
-        Didn't receive? <span style={{ color: "#2563eb", cursor: "pointer" }}>Resend OTP</span> (0:28)
+      <div style={{ textAlign: "center", color: "rgba(255,255,255,0.4)", fontSize: 11, fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic" }}>
+        Didn't receive? <span style={{ color: "#60a5fa", cursor: "pointer" }}>Resend OTP</span> (0:28)
       </div>
     </div>
   );
@@ -417,325 +549,359 @@ const OTPScreen = ({ onVerify, onBack, theme }: { role: Role; onVerify: () => vo
 // DOCTOR SCREENS
 // ─────────────────────────────────────────────────────────────────────────────
 
-const DocHome = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: Theme }) => (
-  <div className="flex flex-col h-full" style={{ background: theme.bg }}>
-    {/* Header */}
-    <div style={{ background: theme.headerBg, padding: "16px 16px 24px" }}>
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <div style={{ color: theme.textSec, fontSize: 10, fontWeight: 600 }}>DR. ARJUN MEHTA, MD</div>
-          <div style={{ color: theme.text, fontWeight: 800, fontSize: 16 }}>Good Morning! 👋</div>
-          <div style={{ color: theme.textSec, fontSize: 10 }}>Cardiology · MCI Reg: DL/12345 · ID: P10-D-001</div>
+const DocHome = ({ setScreen, theme, setTheme }: { setScreen: (s: Screen) => void; theme: ThemeMode; setTheme: (t: ThemeMode) => void }) => {
+  const t = THEMES[theme];
+  const isLight = theme === "light";
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.bg }}>
+      <div style={{ background: t.headerBg, padding: "14px 16px 20px", animation: "fadeInDown 0.35s ease-out" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+          <div>
+            <div style={{ color: isLight ? "rgba(255,255,255,0.75)" : "rgba(147,197,253,0.7)", fontSize: 10, fontWeight: 600, fontFamily: "'Cormorant Garamond', Georgia, serif", letterSpacing: 1 }}>DR. ARJUN MEHTA, MD</div>
+            <div style={{ color: "#ffffff", fontWeight: 800, fontSize: 16, fontFamily: "'Playfair Display', Georgia, serif", display: "flex", alignItems: "center", gap: 6 }}>
+              Good Morning! <Zap size={14} color="#fbbf24" />
+            </div>
+            <div style={{ color: isLight ? "rgba(255,255,255,0.65)" : "rgba(147,197,253,0.7)", fontSize: 10, fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic" }}>Cardiology · MCI Reg: DL/12345</div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+            <DoctorAvatar size={46} />
+            <ThemeSwitcher theme={theme} setTheme={setTheme} />
+          </div>
         </div>
-        <div style={{ width: 48, height: 48, background: "linear-gradient(135deg,#2563eb,#06b6d4)", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>👨‍⚕️</div>
-      </div>
-      {/* Date Banner */}
-      <div style={{ background: theme.inputBg, borderRadius: 12, padding: "8px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ color: theme.textSec, fontSize: 10 }}>📅 Wednesday, 19 Feb 2025</span>
-        <span style={{ color: "#fbbf24", fontSize: 10, fontWeight: 600 }}>● OPD Running</span>
-      </div>
-    </div>
-
-    <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 flex flex-col gap-4">
-      {/* Quick Stats */}
-      <div className="grid grid-cols-4 gap-2">
-        <QuickStatCard theme={theme} label="OPD Queue" value={14} icon="👥" color="linear-gradient(135deg,#2563eb,#3b82f6)" />
-        <QuickStatCard theme={theme} label="IPD Census" value={28} icon="🛏️" color="linear-gradient(135deg,#059669,#10b981)" />
-        <QuickStatCard theme={theme} label="Alerts" value={3} icon="⚠️" color="linear-gradient(135deg,#dc2626,#ef4444)" />
-        <QuickStatCard theme={theme} label="Reports" value={7} icon="📋" color="linear-gradient(135deg,#7c3aed,#8b5cf6)" />
+        <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: 12, padding: "8px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ color: "rgba(255,255,255,0.65)", fontSize: 10, fontFamily: "'Cormorant Garamond', Georgia, serif", display: "flex", alignItems: "center", gap: 4 }}>
+            <Calendar size={10} color="rgba(255,255,255,0.65)" /> Wednesday, 19 Feb 2025
+          </span>
+          <span style={{ color: "#fbbf24", fontSize: 10, fontWeight: 600, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>● OPD Running</span>
+        </div>
       </div>
 
-      {/* Quick Actions */}
-      <div>
-        <div style={{ color: theme.accent, fontSize: 11, fontWeight: 700, marginBottom: 10, letterSpacing: 0.5 }}>QUICK ACTIONS</div>
-        <div className="grid grid-cols-3 gap-3">
+      <div style={{ flex: 1, overflowY: "auto", padding: "14px", display: "flex", flexDirection: "column", gap: 14 }} className="no-scrollbar">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
           {[
-            { icon: "🗓️", label: "OPD Schedule", screen: "doc_opd", color: "linear-gradient(135deg,#1a3a6e,#2563eb)" },
-            { icon: "🛏️", label: "IPD Rounds", screen: "doc_ipd", color: "linear-gradient(135deg,#064e3b,#059669)" },
-            { icon: "💊", label: "Prescription", screen: "doc_prescription", color: "linear-gradient(135deg,#4c1d95,#7c3aed)" },
-            { icon: "📹", label: "Video Consult", screen: "doc_video", color: "linear-gradient(135deg,#0c4a6e,#0ea5e9)" },
-            { icon: "📅", label: "Leave/Cover", screen: "doc_leave", color: "linear-gradient(135deg,#78350f,#d97706)" },
-            { icon: "📊", label: "Analytics", screen: "doc_reports", color: "linear-gradient(135deg,#581c87,#9333ea)" },
-          ].map(({ icon, label, screen, color }) => (
-            <button key={label} onClick={() => setScreen(screen as Screen)}
-              style={{ background: color, border: `1px solid ${theme.cardBorder}`, borderRadius: 16, padding: "14px 8px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}>
-              <span style={{ fontSize: 24 }}>{icon}</span>
-              <span style={{ color: "#fff", fontSize: 9.5, fontWeight: 600, textAlign: "center", lineHeight: "1.2" }}>{label}</span>
-            </button>
+            { label: "Today OPD", value: "28", IconComp: Users, color: "linear-gradient(135deg,#2563eb,#3b82f6)" },
+            { label: "Inpatients", value: "12", IconComp: BedDouble, color: "linear-gradient(135deg,#7c3aed,#8b5cf6)" },
+            { label: "Critical", value: "3", IconComp: AlertTriangle, color: "linear-gradient(135deg,#dc2626,#ef4444)" },
+            { label: "Reports", value: "7", IconComp: FileText, color: "linear-gradient(135deg,#059669,#10b981)" },
+          ].map(card => (
+            <QuickStatCard key={card.label} label={card.label} value={card.value} IconComp={card.IconComp} color={card.color} theme={theme} />
           ))}
         </div>
-      </div>
 
-      {/* Today's Schedule Preview */}
-      <div>
-        <div style={{ color: theme.accent, fontSize: 11, fontWeight: 700, marginBottom: 10, letterSpacing: 0.5 }}>TODAY'S SCHEDULE</div>
-        <div className="flex flex-col gap-2">
+        {/* OPD Summary */}
+        <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 18, padding: "14px", animation: "fadeInUp 0.4s ease-out" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <div style={{ color: t.text, fontWeight: 700, fontSize: 13, fontFamily: "'Playfair Display', Georgia, serif" }}>OPD Queue Today</div>
+            <button onClick={() => setScreen("doc_opd")} style={{ background: "rgba(37,99,235,0.15)", border: "none", borderRadius: 8, padding: "4px 10px", color: t.accent, fontSize: 10, fontWeight: 600, cursor: "pointer", fontFamily: "'Cormorant Garamond', Georgia, serif" }}>View All →</button>
+          </div>
           {OPD_PATIENTS.slice(0, 3).map(p => (
-            <button key={p.id} onClick={() => setScreen("doc_opd")}
-              style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: 14, padding: "10px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", width: "100%", boxShadow: theme.mode === 'light' ? '0 1px 4px rgba(0,0,0,0.05)' : 'none' }}>
-              <div style={{ textAlign: "left" }}>
-                <div style={{ color: theme.text, fontWeight: 600, fontSize: 12 }}>{p.name}</div>
-                <div style={{ color: theme.textSec, fontSize: 10 }}>{p.time} · {p.complaint.slice(0, 22)}…</div>
+            <div key={p.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${t.border}` }}>
+              <div>
+                <div style={{ color: t.text, fontSize: 12, fontWeight: 600, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{p.name}</div>
+                <div style={{ color: t.subText, fontSize: 10, fontFamily: "'Libre Baskerville', Georgia, serif" }}>{p.time} · {p.complaint.slice(0, 22)}…</div>
               </div>
               <StatusBadge status={p.status} />
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Critical Alert */}
-      <div style={{ background: "linear-gradient(135deg,rgba(220,38,38,0.2),rgba(239,68,68,0.1))", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 16, padding: "12px 14px" }}>
-        <div style={{ color: "#fca5a5", fontSize: 10, fontWeight: 700, marginBottom: 4 }}>⚠️ CRITICAL ALERT</div>
-        <div style={{ color: theme.text, fontSize: 12, fontWeight: 600 }}>Mohan Gupta — Cardiac ICU</div>
-        <div style={{ color: "rgba(252,165,165,0.8)", fontSize: 10, marginTop: 2 }}>SpO₂ dropped to 88% · Immediate attention required</div>
-      </div>
-    </div>
-  </div>
-);
-
-const DocOPD = ({ setScreen, setSelectedPatient, theme }: { setScreen: (s: Screen) => void; setSelectedPatient: (p: typeof OPD_PATIENTS[0]) => void; theme: Theme }) => (
-  <div className="flex flex-col h-full" style={{ background: theme.bg }}>
-    <SectionHeader theme={theme} title="OPD Schedule" subtitle="Wednesday, 19 Feb · 14 Patients" onBack={() => setScreen("doc_home")} />
-    <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-3 flex flex-col gap-3">
-      {OPD_PATIENTS.map((p, idx) => (
-        <button key={p.id} onClick={() => { setSelectedPatient(p); setScreen("doc_patient_detail"); }}
-          style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: 16, padding: "12px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", width: "100%", animation: `fadeInUp ${0.1 + idx * 0.06}s ease-out`, boxShadow: theme.mode === 'light' ? '0 1px 4px rgba(0,0,0,0.05)' : 'none' }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ background: "linear-gradient(135deg,#1a3a6e,#2563eb)", borderRadius: 12, width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 14, flexShrink: 0 }}>
-              {p.name.split(" ").map(n => n[0]).join("")}
             </div>
-            <div style={{ textAlign: "left" }}>
-              <div style={{ color: theme.text, fontWeight: 700, fontSize: 12 }}>{p.name}</div>
-              <div style={{ color: theme.textSec, fontSize: 10 }}>{p.id} · {p.time}</div>
-              <div style={{ color: theme.textSec, fontSize: 9.5, marginTop: 1 }}>{p.complaint}</div>
-            </div>
-          </div>
-          <StatusBadge status={p.status} />
-        </button>
-      ))}
-    </div>
-  </div>
-);
-
-const DocPatientDetail = ({ patient, setScreen, theme, showToast }: { patient: typeof OPD_PATIENTS[0] | null; setScreen: (s: Screen) => void; theme: Theme; showToast: (msg: string) => void }) => {
-  const [tab, setTab] = useState<"vitals" | "history" | "labs">("vitals");
-  if (!patient) return null;
-  return (
-    <div className="flex flex-col h-full" style={{ background: theme.bg }}>
-      <SectionHeader theme={theme} title={patient.name} subtitle={`${patient.id} · ${patient.age}Y/${patient.gender} · ${patient.blood}`} onBack={() => setScreen("doc_opd")} />
-      <div className="flex-1 overflow-y-auto no-scrollbar">
-        {/* Patient Summary */}
-        <div style={{ background: theme.headerBg, padding: "12px 16px" }}>
-          <div className="grid grid-cols-2 gap-2 mb-3">
-            <div style={{ background: theme.inputBg, borderRadius: 10, padding: "8px 10px" }}>
-              <div style={{ color: theme.textSec, fontSize: 9 }}>DIAGNOSIS</div>
-              <div style={{ color: theme.text, fontSize: 11, fontWeight: 600, marginTop: 2 }}>{patient.diagnosis}</div>
-            </div>
-            <div style={{ background: "rgba(239,68,68,0.1)", borderRadius: 10, padding: "8px 10px" }}>
-              <div style={{ color: "rgba(252,165,165,0.7)", fontSize: 9 }}>ALLERGY</div>
-              <div style={{ color: "#fca5a5", fontSize: 11, fontWeight: 600, marginTop: 2 }}>{patient.allergy}</div>
-            </div>
-          </div>
-          <div style={{ color: theme.textSec, fontSize: 9, marginBottom: 6 }}>CHIEF COMPLAINT</div>
-          <div style={{ color: theme.text, fontSize: 11 }}>{patient.complaint}</div>
-        </div>
-
-        {/* Tabs */}
-        <div style={{ display: "flex", background: theme.cardBg, borderBottom: `1px solid ${theme.cardBorder}` }}>
-          {(["vitals", "history", "labs"] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: "10px 0", border: "none", cursor: "pointer", fontSize: 11, fontWeight: 600, background: "transparent", color: tab === t ? "#2563eb" : theme.textSec, borderBottom: tab === t ? "2px solid #2563eb" : "2px solid transparent" }}>
-              {t === "vitals" ? "Vitals" : t === "history" ? "History" : "Lab Results"}
-            </button>
           ))}
         </div>
 
-        <div className="px-4 py-3">
-          {tab === "vitals" && (
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { label: "Blood Pressure", value: patient.bp, icon: "💉", color: "#ef4444" },
-                { label: "SpO₂", value: patient.spo2, icon: "🫁", color: "#2563eb" },
-                { label: "Pulse Rate", value: patient.pulse, icon: "❤️", color: "#ec4899" },
-                { label: "Temperature", value: patient.temp, icon: "🌡️", color: "#f59e0b" },
-                { label: "Weight", value: patient.weight, icon: "⚖️", color: "#10b981" },
-                { label: "Blood Sugar", value: patient.rbs, icon: "🩸", color: "#8b5cf6" },
-              ].map(v => (
-                <div key={v.label} style={{ background: theme.cardBg, border: `1px solid ${v.color}30`, borderRadius: 14, padding: "10px 8px", textAlign: "center", boxShadow: theme.mode === 'light' ? '0 1px 4px rgba(0,0,0,0.05)' : 'none' }}>
-                  <div style={{ fontSize: 18, marginBottom: 4 }}>{v.icon}</div>
-                  <div style={{ color: v.color, fontSize: 12, fontWeight: 700 }}>{v.value}</div>
-                  <div style={{ color: theme.textSec, fontSize: 8, marginTop: 2 }}>{v.label}</div>
-                </div>
-              ))}
-            </div>
-          )}
-          {tab === "history" && (
-            <div className="flex flex-col gap-2">
-              {["01 Jan 2025 — Hypertension review · Amlodipine adjusted", "15 Nov 2024 — ECG: Normal sinus rhythm", "02 Sep 2024 — Echo: EF 55%, mild LVH"].map((h, i) => (
-                <div key={i} style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: 12, padding: "10px 12px" }}>
-                  <div style={{ color: theme.text, fontSize: 11 }}>{h}</div>
-                </div>
-              ))}
-            </div>
-          )}
-          {tab === "labs" && (
-            <div className="flex flex-col gap-2">
-              {[
-                { test: "CBC", result: "WBC: 8.2, Hb: 13.4, Plt: 210K", flag: "Normal" },
-                { test: "K⁺ (Potassium)", result: "6.8 mEq/L", flag: "⚠️ Critical" },
-                { test: "Creatinine", result: "1.4 mg/dL", flag: "High" },
-                { test: "HbA1c", result: "7.2%", flag: "Elevated" },
-              ].map(l => (
-                <div key={l.test} style={{ background: theme.cardBg, border: `1px solid ${l.flag.includes("Critical") ? "rgba(239,68,68,0.4)" : theme.cardBorder}`, borderRadius: 12, padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div>
-                    <div style={{ color: theme.text, fontSize: 12, fontWeight: 600 }}>{l.test}</div>
-                    <div style={{ color: theme.textSec, fontSize: 10 }}>{l.result}</div>
-                  </div>
-                  <span style={{ fontSize: 9, padding: "3px 8px", borderRadius: 8, background: l.flag.includes("Critical") ? "rgba(239,68,68,0.3)" : theme.inputBg, color: l.flag.includes("Critical") ? "#fca5a5" : theme.accent, fontWeight: 600 }}>{l.flag}</span>
-                </div>
-              ))}
-            </div>
-          )}
+        {/* Monthly OPD Chart */}
+        <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 18, padding: "14px", animation: "fadeInUp 0.5s ease-out" }}>
+          <div style={{ color: t.accent, fontSize: 11, fontWeight: 700, marginBottom: 10, fontFamily: "'Playfair Display', Georgia, serif" }}>MONTHLY OPD TREND</div>
+          <ResponsiveContainer width="100%" height={100}>
+            <BarChart data={MONTHLY_OPD} margin={{ top: 0, right: 0, bottom: 0, left: -20 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={t.border} />
+              <XAxis dataKey="month" tick={{ fill: t.accent, fontSize: 9, fontFamily: "'Cormorant Garamond', Georgia, serif" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: t.accent, fontSize: 9 }} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={{ background: t.bg, border: `1px solid ${t.border}`, borderRadius: 10, color: t.text, fontSize: 11 }} />
+              <Bar dataKey="count" fill="url(#blueGrad)" radius={[6,6,0,0]} />
+              <defs>
+                <linearGradient id="blueGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#2563eb" />
+                  <stop offset="100%" stopColor="#1a3a6e" />
+                </linearGradient>
+              </defs>
+            </BarChart>
+          </ResponsiveContainer>
         </div>
 
-        {/* Actions */}
-        <div style={{ padding: "0 16px 16px", display: "flex", gap: 8 }}>
-          <button onClick={() => setScreen("doc_prescription")} style={{ flex: 1, background: "linear-gradient(135deg,#2563eb,#1d4ed8)", border: "none", borderRadius: 12, padding: "12px 0", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>💊 Write Rx</button>
-          <button onClick={() => showToast("Referral request sent to Administration")} style={{ flex: 1, background: "rgba(16,185,129,0.2)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 12, padding: "12px 0", color: "#34d399", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>↗️ Refer</button>
-          <button onClick={() => { showToast("Consultation marked as complete"); setScreen('doc_opd'); }} style={{ flex: 1, background: "rgba(124,58,237,0.2)", border: "1px solid rgba(124,58,237,0.3)", borderRadius: 12, padding: "12px 0", color: "#a78bfa", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>✅ Done</button>
+        {/* Quick Actions */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+          {[
+            { label: "Video Consult", Icon: Video, screen: "doc_video", color: "linear-gradient(135deg,#0c4a6e,#0ea5e9)" },
+            { label: "IPD Rounds", Icon: BedDouble, screen: "doc_ipd", color: "linear-gradient(135deg,#4c1d95,#7c3aed)" },
+            { label: "Analytics", Icon: TrendingUp, screen: "doc_reports", color: "linear-gradient(135deg,#064e3b,#059669)" },
+            { label: "Leave Mgmt", Icon: Calendar, screen: "doc_leave", color: "linear-gradient(135deg,#78350f,#d97706)" },
+            { label: "Alerts", Icon: Bell, screen: "doc_notifications", color: "linear-gradient(135deg,#dc2626,#ef4444)" },
+            { label: "Profile", Icon: User, screen: "doc_profile", color: "linear-gradient(135deg,#1a3a6e,#2563eb)" },
+          ].map(({ label, Icon, screen, color }) => (
+            <button key={label} onClick={() => setScreen(screen as Screen)}
+              style={{ background: color, border: "none", borderRadius: 14, padding: "12px 6px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 5, boxShadow: "0 4px 12px rgba(0,0,0,0.2)", transition: "transform 0.15s" }}
+              onMouseDown={e => (e.currentTarget.style.transform = "scale(0.95)")}
+              onMouseUp={e => (e.currentTarget.style.transform = "scale(1)")}>
+              <Icon size={18} color="#fff" strokeWidth={1.5} />
+              <span style={{ color: "#ffffff", fontSize: 9.5, fontWeight: 600, textAlign: "center", fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{label}</span>
+            </button>
+          ))}
         </div>
+        <div style={{ height: 8 }} />
       </div>
     </div>
   );
 };
 
-const DocIPD = ({ setScreen, theme, showToast }: { setScreen: (s: Screen) => void; theme: Theme; showToast: (msg: string) => void }) => (
-  <div className="flex flex-col h-full" style={{ background: theme.bg }}>
-    <SectionHeader theme={theme} title="IPD Inpatients" subtitle="28 Patients · 3 Critical" onBack={() => setScreen("doc_home")} />
-    <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-3 flex flex-col gap-3">
-      {IPD_PATIENTS.map(p => (
-        <div key={p.id} style={{ background: theme.cardBg, border: `1px solid ${p.status === "Critical" ? "rgba(239,68,68,0.3)" : theme.cardBorder}`, borderRadius: 16, padding: "14px", boxShadow: theme.mode === 'light' ? '0 1px 4px rgba(0,0,0,0.05)' : 'none' }}>
-          <div className="flex justify-between items-start mb-2">
-            <div>
-              <div style={{ color: theme.text, fontWeight: 700, fontSize: 13 }}>{p.name}</div>
-              <div style={{ color: theme.textSec, fontSize: 10 }}>Bed {p.bed} · {p.ward} · {p.days} days</div>
+const DocOPD = ({ setScreen, setSelectedPatient, theme }: { setScreen: (s: Screen) => void; setSelectedPatient: (p: typeof OPD_PATIENTS[0]) => void; theme: ThemeMode }) => {
+  const t = THEMES[theme];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.bg }}>
+      <SectionHeader title="OPD Queue" subtitle="Today · 28 Patients" onBack={() => setScreen("doc_home")} theme={theme} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: 10 }} className="no-scrollbar">
+        {OPD_PATIENTS.map((p, i) => (
+          <div key={p.id} onClick={() => { setSelectedPatient(p); setScreen("doc_patient_detail"); }}
+            style={{ background: t.cardBg, border: `1px solid ${p.status === "Critical" ? "rgba(239,68,68,0.35)" : t.border}`, borderRadius: 16, padding: "12px 14px", cursor: "pointer", animation: `fadeInUp ${0.15 + i * 0.07}s ease-out`, transition: "transform 0.15s, box-shadow 0.15s" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "scale(1.01)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 16px rgba(37,99,235,0.12)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "scale(1)"; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+              <div>
+                <div style={{ color: t.text, fontWeight: 700, fontSize: 13, fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic" }}>{p.name}</div>
+                <div style={{ color: t.subText, fontSize: 10, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{p.id} · Age {p.age} · {p.gender} · {p.blood}</div>
+              </div>
+              <StatusBadge status={p.status} />
             </div>
-            <StatusBadge status={p.status} />
+            <div style={{ color: t.subText, fontSize: 10.5, marginBottom: 6, fontFamily: "'Libre Baskerville', Georgia, serif", fontStyle: "italic" }}>{p.complaint}</div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ color: t.accent, fontSize: 10, fontWeight: 600, display: "flex", alignItems: "center", gap: 3, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+                <Clock size={10} />{p.time}
+              </span>
+              <span style={{ color: t.subText, fontSize: 10, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Tap to view →</span>
+            </div>
           </div>
-          <div style={{ color: theme.textSec, fontSize: 11, marginBottom: 8 }}>Dx: {p.diagnosis}</div>
-          <div style={{ display: "flex", gap: 6 }}>
-            <button onClick={() => showToast(`Opening Notes: ${p.name}`)} style={{ flex: 1, background: theme.inputBg, border: `1px solid ${theme.inputBorder}`, borderRadius: 10, padding: "7px 0", color: theme.accent, fontSize: 10, fontWeight: 600, cursor: "pointer" }}>📋 Notes</button>
-            <button onClick={() => showToast(`View Meds: ${p.name}`)} style={{ flex: 1, background: theme.inputBg, border: `1px solid ${theme.inputBorder}`, borderRadius: 10, padding: "7px 0", color: theme.accent, fontSize: 10, fontWeight: 600, cursor: "pointer" }}>💊 Meds</button>
-            <button onClick={() => showToast(`Checking Vitals: ${p.name}`)} style={{ flex: 1, background: theme.inputBg, border: `1px solid ${theme.inputBorder}`, borderRadius: 10, padding: "7px 0", color: theme.accent, fontSize: 10, fontWeight: 600, cursor: "pointer" }}>📊 Vitals</button>
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
-const DocPrescription = ({ setScreen, theme, showToast }: { setScreen: (s: Screen) => void; theme: Theme; showToast: (msg: string) => void }) => {
+const DocPatientDetail = ({ patient, setScreen, theme }: { patient: typeof OPD_PATIENTS[0] | null; setScreen: (s: Screen) => void; theme: ThemeMode }) => {
+  const [activeTab, setActiveTab] = useState<"vitals" | "history" | "labs">("vitals");
+  const t = THEMES[theme];
+  if (!patient) return null;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.bg }}>
+      <SectionHeader title={patient.name} subtitle={`${patient.id} · ${patient.diagnosis}`} onBack={() => setScreen("doc_opd")} theme={theme} />
+      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: t.cardBg, borderBottom: `1px solid ${t.border}` }}>
+        <span style={{ color: t.subText, fontSize: 10, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Age {patient.age} · {patient.gender} · Blood: <strong style={{ color: t.accent }}>{patient.blood}</strong></span>
+        <span style={{ marginLeft: "auto" }}><StatusBadge status={patient.status} /></span>
+      </div>
+
+      <div style={{ display: "flex", gap: 3, padding: "10px 14px 0", background: t.cardBg }}>
+        {(["vitals","history","labs"] as const).map(tab => (
+          <button key={tab} onClick={() => setActiveTab(tab)}
+            style={{ flex: 1, padding: "7px 0", borderRadius: 10, border: "none", cursor: "pointer", fontSize: 11, fontWeight: activeTab === tab ? 700 : 400, background: activeTab === tab ? "linear-gradient(135deg,#2563eb,#1d4ed8)" : t.inputBg, color: activeTab === tab ? "#ffffff" : t.subText, textTransform: "capitalize", fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }} className="no-scrollbar">
+        {activeTab === "vitals" && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8, animation: "scaleIn 0.25s ease-out" }}>
+            {[
+              { label: "Blood Pressure", value: patient.bp, Icon: Activity, color: "#ef4444" },
+              { label: "SpO₂", value: patient.spo2, Icon: Droplets, color: "#0ea5e9" },
+              { label: "Pulse Rate", value: patient.pulse, Icon: Heart, color: "#f43f5e" },
+              { label: "Temperature", value: patient.temp, Icon: Thermometer, color: "#f59e0b" },
+              { label: "Weight", value: patient.weight, Icon: Weight, color: "#10b981" },
+              { label: "Blood Sugar", value: patient.rbs, Icon: FlaskConical, color: "#8b5cf6" },
+            ].map(v => (
+              <div key={v.label} style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "12px 14px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                  <v.Icon size={14} color={v.color} />
+                  <span style={{ color: t.subText, fontSize: 9.5, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{v.label}</span>
+                </div>
+                <div style={{ color: t.text, fontWeight: 700, fontSize: 14, fontFamily: "'Playfair Display', Georgia, serif" }}>{v.value}</div>
+              </div>
+            ))}
+          </div>
+        )}
+        {activeTab === "history" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, animation: "scaleIn 0.25s ease-out" }}>
+            <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "12px 14px" }}>
+              <div style={{ color: t.accent, fontSize: 10, fontWeight: 700, marginBottom: 6, fontFamily: "'Playfair Display', Georgia, serif" }}>CHIEF COMPLAINT</div>
+              <div style={{ color: t.text, fontSize: 12, fontFamily: "'Libre Baskerville', Georgia, serif", fontStyle: "italic" }}>{patient.complaint}</div>
+            </div>
+            <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "12px 14px" }}>
+              <div style={{ color: t.accent, fontSize: 10, fontWeight: 700, marginBottom: 6, fontFamily: "'Playfair Display', Georgia, serif" }}>DIAGNOSIS</div>
+              <div style={{ color: t.text, fontSize: 12, fontFamily: "'Libre Baskerville', Georgia, serif' }}" }}>{patient.diagnosis}</div>
+            </div>
+            <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "12px 14px" }}>
+              <div style={{ color: t.accent, fontSize: 10, fontWeight: 700, marginBottom: 6, fontFamily: "'Playfair Display', Georgia, serif" }}>ALLERGIES</div>
+              <div style={{ color: "#fca5a5", fontSize: 12, fontWeight: 600, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{patient.allergy}</div>
+            </div>
+          </div>
+        )}
+        {activeTab === "labs" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, animation: "scaleIn 0.25s ease-out" }}>
+            {[{ test: "CBC", result: "Hb 11.2, WBC 9400, Plt 2.1L", flag: "Normal" }, { test: "ECG", result: "Sinus Tachycardia, LVH", flag: "Abnormal" }, { test: "Echo", result: "EF 55%, Diastolic Dysfunction", flag: "Review" }].map(l => (
+              <div key={l.test} style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "12px 14px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                  <div style={{ color: t.text, fontWeight: 700, fontSize: 12, fontFamily: "'Playfair Display', Georgia, serif" }}>{l.test}</div>
+                  <span style={{ background: l.flag === "Normal" ? "rgba(16,185,129,0.2)" : l.flag === "Abnormal" ? "rgba(239,68,68,0.2)" : "rgba(245,158,11,0.2)", color: l.flag === "Normal" ? "#34d399" : l.flag === "Abnormal" ? "#fca5a5" : "#fbbf24", fontSize: 9, padding: "2px 7px", borderRadius: 8, fontWeight: 600, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{l.flag}</span>
+                </div>
+                <div style={{ color: t.subText, fontSize: 10.5, fontFamily: "'Libre Baskerville', Georgia, serif", fontStyle: "italic" }}>{l.result}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div style={{ padding: "0 14px 14px", display: "flex", gap: 8 }}>
+        <button onClick={() => setScreen("doc_prescription")} style={{ flex: 1, background: "linear-gradient(135deg,#2563eb,#1d4ed8)", border: "none", borderRadius: 12, padding: "12px 0", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 5, fontFamily: "'Playfair Display', Georgia, serif" }}>
+          <Pill size={14} /> Write Rx
+        </button>
+        <button style={{ flex: 1, background: "rgba(16,185,129,0.2)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 12, padding: "12px 0", color: "#34d399", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Refer</button>
+        <button style={{ flex: 1, background: "rgba(124,58,237,0.2)", border: "1px solid rgba(124,58,237,0.3)", borderRadius: 12, padding: "12px 0", color: "#a78bfa", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Done</button>
+      </div>
+    </div>
+  );
+};
+
+const DocIPD = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: ThemeMode }) => {
+  const t = THEMES[theme];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.bg }}>
+      <SectionHeader title="IPD Inpatients" subtitle="28 Patients · 3 Critical" onBack={() => setScreen("doc_home")} theme={theme} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: 10 }} className="no-scrollbar">
+        {IPD_PATIENTS.map((p, i) => (
+          <div key={p.id} style={{ background: t.cardBg, border: `1px solid ${p.status === "Critical" ? "rgba(239,68,68,0.4)" : t.border}`, borderRadius: 16, padding: "14px", animation: `fadeInUp ${0.1 + i * 0.08}s ease-out` }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+              <div>
+                <div style={{ color: t.text, fontWeight: 700, fontSize: 13, fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic" }}>{p.name}</div>
+                <div style={{ color: t.subText, fontSize: 10, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Bed {p.bed} · {p.ward} · {p.days} days</div>
+              </div>
+              <StatusBadge status={p.status} />
+            </div>
+            <div style={{ color: t.subText, fontSize: 11, marginBottom: 8, fontFamily: "'Libre Baskerville', Georgia, serif", fontStyle: "italic" }}>Dx: {p.diagnosis}</div>
+            <div style={{ display: "flex", gap: 6 }}>
+              {[{ label: "Notes", Icon: ClipboardList }, { label: "Meds", Icon: Pill }, { label: "Vitals", Icon: Activity }].map(btn => (
+                <button key={btn.label} style={{ flex: 1, background: "rgba(37,99,235,0.15)", border: `1px solid rgba(37,99,235,0.25)`, borderRadius: 10, padding: "7px 0", color: t.accent, fontSize: 10, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 3, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+                  <btn.Icon size={10} /> {btn.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const DocPrescription = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: ThemeMode }) => {
   const [search, setSearch] = useState("");
   const [selectedMeds, setSelectedMeds] = useState<string[]>(["Amlodipine 5mg", "Pantoprazole 40mg"]);
   const filtered = MEDICINES.filter(m => m.name.toLowerCase().includes(search.toLowerCase()));
-
+  const t = THEMES[theme];
   return (
-    <div className="flex flex-col h-full" style={{ background: theme.bg }}>
-      <SectionHeader theme={theme} title="Prescription Writer" subtitle="Patient: Rahul Sharma · P10-2024-001" onBack={() => setScreen("doc_patient_detail")} />
-      <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-3 flex flex-col gap-4">
-        {/* Diagnosis */}
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.bg }}>
+      <SectionHeader title="Prescription Writer" subtitle="Patient: Rahul Sharma · P10-2024-001" onBack={() => setScreen("doc_patient_detail")} theme={theme} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: 14 }} className="no-scrollbar">
         <div>
-          <label style={{ color: theme.accent, fontSize: 11, fontWeight: 600, display: "block", marginBottom: 6 }}>DIAGNOSIS (ICD-10)</label>
-          <input defaultValue="I11.0 — Hypertensive Heart Disease" style={{ width: "100%", background: theme.inputBg, border: `1px solid ${theme.inputBorder}`, borderRadius: 12, padding: "10px 12px", color: theme.text, fontSize: 12, outline: "none", boxSizing: "border-box" }} />
+          <label style={{ color: t.accent, fontSize: 10, fontWeight: 600, display: "block", marginBottom: 6, letterSpacing: 1, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>DIAGNOSIS (ICD-10)</label>
+          <input defaultValue="I11.0 — Hypertensive Heart Disease" style={{ width: "100%", background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: "10px 12px", color: t.text, fontSize: 12, outline: "none", boxSizing: "border-box", fontFamily: "'Libre Baskerville', Georgia, serif", fontStyle: "italic" }} />
         </div>
-
-        {/* Medicine Search */}
         <div>
-          <label style={{ color: theme.accent, fontSize: 11, fontWeight: 600, display: "block", marginBottom: 6 }}>SEARCH MEDICINE</label>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Type medicine name..." style={{ width: "100%", background: theme.inputBg, border: `1px solid ${theme.inputBorder}`, borderRadius: 12, padding: "10px 12px", color: theme.text, fontSize: 12, outline: "none", boxSizing: "border-box", marginBottom: 8 }} />
+          <label style={{ color: t.accent, fontSize: 10, fontWeight: 600, display: "block", marginBottom: 6, letterSpacing: 1, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>SEARCH MEDICINE</label>
+          <div style={{ position: "relative" }}>
+            <Search size={13} color={t.accent} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)" }} />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Type medicine name..."
+              style={{ width: "100%", background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: "10px 12px 10px 28px", color: t.text, fontSize: 12, outline: "none", boxSizing: "border-box", marginBottom: 8, fontFamily: "'Libre Baskerville', Georgia, serif" }} />
+          </div>
           {search && (
-            <div style={{ background: theme.mode === 'dark' ? "rgba(10,22,40,0.9)" : "#fff", border: `1px solid ${theme.cardBorder}`, borderRadius: 12, maxHeight: 130, overflowY: "auto", boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
+            <div style={{ background: t.bg, border: `1px solid ${t.border}`, borderRadius: 12, maxHeight: 130, overflowY: "auto" }}>
               {filtered.map(m => (
                 <button key={m.name} onClick={() => { if (!selectedMeds.includes(m.name)) setSelectedMeds(prev => [...prev, m.name]); setSearch(""); }}
-                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", width: "100%", border: "none", background: "transparent", cursor: "pointer", borderBottom: `1px solid ${theme.cardBorder}` }}>
+                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", width: "100%", border: "none", background: "transparent", cursor: "pointer", borderBottom: `1px solid ${t.border}` }}>
                   <div style={{ textAlign: "left" }}>
-                    <div style={{ color: theme.text, fontSize: 11, fontWeight: 600 }}>{m.name}</div>
-                    <div style={{ color: theme.textSec, fontSize: 9 }}>{m.category}</div>
+                    <div style={{ color: t.text, fontSize: 11, fontWeight: 600, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{m.name}</div>
+                    <div style={{ color: t.subText, fontSize: 9, fontFamily: "'Libre Baskerville', Georgia, serif" }}>{m.category}</div>
                   </div>
-                  <span style={{ color: "#34d399", fontSize: 10 }}>+ Add</span>
+                  <span style={{ color: "#34d399", fontSize: 10, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>+ Add</span>
                 </button>
               ))}
             </div>
           )}
         </div>
-
-        {/* Selected Medicines */}
         <div>
-          <label style={{ color: theme.accent, fontSize: 11, fontWeight: 600, display: "block", marginBottom: 6 }}>PRESCRIBED MEDICINES ({selectedMeds.length})</label>
-          <div className="flex flex-col gap-2">
+          <label style={{ color: t.accent, fontSize: 10, fontWeight: 600, display: "block", marginBottom: 6, letterSpacing: 1, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>PRESCRIBED MEDICINES ({selectedMeds.length})</label>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {selectedMeds.map((med, i) => (
-              <div key={i} style={{ background: "rgba(37,99,235,0.15)", border: "1px solid rgba(37,99,235,0.25)", borderRadius: 12, padding: "10px 12px" }}>
-                <div className="flex justify-between items-center mb-2">
-                  <div style={{ color: theme.text, fontSize: 12, fontWeight: 600 }}>{med}</div>
-                  <button onClick={() => setSelectedMeds(prev => prev.filter(m => m !== med))} style={{ background: "rgba(239,68,68,0.2)", border: "none", borderRadius: 8, color: "#fca5a5", fontSize: 10, padding: "2px 6px", cursor: "pointer" }}>✕</button>
+              <div key={i} style={{ background: "rgba(37,99,235,0.12)", border: "1px solid rgba(37,99,235,0.2)", borderRadius: 12, padding: "10px 12px", animation: "scaleIn 0.2s ease-out" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                  <div style={{ color: t.text, fontSize: 12, fontWeight: 600, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{med}</div>
+                  <button onClick={() => setSelectedMeds(prev => prev.filter(m => m !== med))} style={{ background: "rgba(239,68,68,0.2)", border: "none", borderRadius: 8, color: "#fca5a5", fontSize: 10, padding: "2px 6px", cursor: "pointer" }}>
+                    <XCircle size={12} color="#fca5a5" />
+                  </button>
                 </div>
-                <div className="grid grid-cols-3 gap-1">
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 4 }}>
                   {["1-0-1", "After Food", "30 Days"].map((v, j) => (
-                    <div key={j} style={{ background: theme.inputBg, borderRadius: 8, padding: "4px 6px", textAlign: "center", color: theme.textSec, fontSize: 9 }}>{v}</div>
+                    <div key={j} style={{ background: t.inputBg, borderRadius: 8, padding: "4px 6px", textAlign: "center", color: t.subText, fontSize: 9, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{v}</div>
                   ))}
                 </div>
               </div>
             ))}
           </div>
         </div>
-
-        {/* Notes */}
         <div>
-          <label style={{ color: theme.accent, fontSize: 11, fontWeight: 600, display: "block", marginBottom: 6 }}>CLINICAL NOTES</label>
-          <textarea rows={3} defaultValue="Monitor BP daily. Follow up in 2 weeks. Salt-restricted diet advised." style={{ width: "100%", background: theme.inputBg, border: `1px solid ${theme.inputBorder}`, borderRadius: 12, padding: "10px 12px", color: theme.text, fontSize: 11, outline: "none", resize: "none", boxSizing: "border-box" }} />
+          <label style={{ color: t.accent, fontSize: 10, fontWeight: 600, display: "block", marginBottom: 6, letterSpacing: 1, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>CLINICAL NOTES</label>
+          <textarea rows={3} defaultValue="Monitor BP daily. Follow up in 2 weeks. Salt-restricted diet advised."
+            style={{ width: "100%", background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: "10px 12px", color: t.text, fontSize: 11, outline: "none", resize: "none", boxSizing: "border-box", fontFamily: "'Libre Baskerville', Georgia, serif", fontStyle: "italic" }} />
         </div>
-
-        {/* Digital Signature */}
         <div style={{ background: "rgba(37,99,235,0.1)", border: "1px solid rgba(37,99,235,0.2)", borderRadius: 12, padding: "12px", textAlign: "center" }}>
-          <div style={{ color: theme.accent, fontSize: 10, marginBottom: 6 }}>DIGITAL SIGNATURE</div>
-          <div style={{ fontFamily: "cursive", color: theme.text, fontSize: 18 }}>Dr. Arjun Mehta</div>
-          <div style={{ color: theme.textSec, fontSize: 9, marginTop: 4 }}>MCI Reg: DL/12345 · Cardiology</div>
+          <div style={{ color: t.accent, fontSize: 10, marginBottom: 4, letterSpacing: 1, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>DIGITAL SIGNATURE</div>
+          <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", color: t.text, fontSize: 20, fontWeight: 700 }}>Dr. Arjun Mehta</div>
+          <div style={{ color: t.subText, fontSize: 9, marginTop: 4, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>MCI Reg: DL/12345 · Cardiology</div>
         </div>
-
-        {/* Actions */}
-        <div className="flex gap-3 pb-4">
-          <button onClick={() => { showToast("Prescription Saved & Printed!"); setTimeout(() => setScreen('doc_home'), 1500); }} style={{ flex: 1, background: "linear-gradient(135deg,#2563eb,#1d4ed8)", border: "none", borderRadius: 12, padding: "12px 0", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>📄 Save & Print</button>
-          <button onClick={() => showToast("PDF generated and ready to share")} style={{ flex: 1, background: "rgba(16,185,129,0.2)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 12, padding: "12px 0", color: "#34d399", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>📤 Share PDF</button>
+        <div style={{ display: "flex", gap: 10, paddingBottom: 16 }}>
+          <button style={{ flex: 1, background: "linear-gradient(135deg,#2563eb,#1d4ed8)", border: "none", borderRadius: 12, padding: "12px 0", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 5, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+            <Printer size={13} /> Save & Print
+          </button>
+          <button style={{ flex: 1, background: "rgba(16,185,129,0.2)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 12, padding: "12px 0", color: "#34d399", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 5, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+            <Share2 size={13} /> Share PDF
+          </button>
         </div>
       </div>
     </div>
   );
 };
 
-const DocVideo = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: Theme }) => {
+const DocVideo = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: ThemeMode }) => {
   const [inCall, setInCall] = useState(false);
   const [muted, setMuted] = useState(false);
   const [videoOff, setVideoOff] = useState(false);
+  const t = THEMES[theme];
 
   if (inCall) return (
     <div style={{ background: "#000", height: "100%", display: "flex", flexDirection: "column", position: "relative" }}>
       <div style={{ flex: 1, background: "linear-gradient(135deg,#0a1628,#1a3a6e)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12 }}>
-        <div style={{ width: 80, height: 80, background: "linear-gradient(135deg,#2563eb,#06b6d4)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, boxShadow: "0 0 30px rgba(37,99,235,0.5)" }}>👩</div>
-        <div style={{ color: "#fff", fontWeight: 700, fontSize: 18 }}>Mrs. Deepa K.</div>
-        <div style={{ color: "#34d399", fontSize: 12 }}>● Connected · 00:04:32</div>
+        <div style={{ width: 80, height: 80, background: "linear-gradient(135deg,#2563eb,#06b6d4)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 30px rgba(37,99,235,0.5)" }}>
+          <User size={38} color="#fff" strokeWidth={1.5} />
+        </div>
+        <div style={{ color: "#fff", fontWeight: 700, fontSize: 18, fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic" }}>Mrs. Deepa K.</div>
+        <div style={{ color: "#34d399", fontSize: 12, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>● Connected · 00:04:32</div>
       </div>
-      {/* Self preview */}
-      <div style={{ position: "absolute", top: 60, right: 12, width: 80, height: 110, background: "linear-gradient(135deg,#1a3a6e,#0a1628)", borderRadius: 14, border: "2px solid rgba(147,197,253,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30 }}>👨‍⚕️</div>
-      {/* Controls */}
-      <div style={{ background: "rgba(0,0,0,0.8)", padding: "16px 24px 20px", display: "flex", justifyContent: "space-around", alignItems: "center" }}>
+      <div style={{ position: "absolute", top: 20, right: 12, width: 80, height: 110, background: "linear-gradient(135deg,#1a3a6e,#0a1628)", borderRadius: 14, border: "2px solid rgba(147,197,253,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <DoctorAvatar size={50} />
+      </div>
+      <div style={{ background: "rgba(0,0,0,0.85)", padding: "16px 24px 20px", display: "flex", justifyContent: "space-around", alignItems: "center" }}>
         {[
-          { icon: muted ? "🔇" : "🎤", label: muted ? "Unmute" : "Mute", action: () => setMuted(m => !m), color: muted ? "#ef4444" : "#374151" },
-          { icon: videoOff ? "📵" : "📹", label: "Camera", action: () => setVideoOff(v => !v), color: videoOff ? "#ef4444" : "#374151" },
-          { icon: "📞", label: "End Call", action: () => setInCall(false), color: "#ef4444", big: true },
-          { icon: "💬", label: "Chat", action: () => { }, color: "#374151" },
-          { icon: "🖥️", label: "Share", action: () => { }, color: "#374151" },
+          { Icon: muted ? MicOff : Mic, action: () => setMuted(m => !m), color: muted ? "#ef4444" : "#374151", big: false },
+          { Icon: videoOff ? VideoOff : Video, action: () => setVideoOff(v => !v), color: videoOff ? "#ef4444" : "#374151", big: false },
+          { Icon: Phone, action: () => setInCall(false), color: "#ef4444", big: true },
+          { Icon: MessageSquare, action: () => {}, color: "#374151", big: false },
+          { Icon: Monitor, action: () => {}, color: "#374151", big: false },
         ].map((ctrl, i) => (
-          <button key={i} onClick={ctrl.action} style={{ background: ctrl.color, border: "none", borderRadius: "50%", width: (ctrl as any).big ? 56 : 44, height: (ctrl as any).big ? 56 : 44, fontSize: (ctrl as any).big ? 22 : 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 2 }}>
-            {ctrl.icon}
+          <button key={i} onClick={ctrl.action} style={{ background: ctrl.color, border: "none", borderRadius: "50%", width: ctrl.big ? 56 : 44, height: ctrl.big ? 56 : 44, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <ctrl.Icon size={ctrl.big ? 22 : 18} color="#fff" />
           </button>
         ))}
       </div>
@@ -743,23 +909,23 @@ const DocVideo = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme:
   );
 
   return (
-    <div className="flex flex-col h-full" style={{ background: theme.bg }}>
-      <SectionHeader theme={theme} title="Video Consultations" subtitle="Today's Teleconsult Sessions" onBack={() => setScreen("doc_home")} />
-      <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-3 flex flex-col gap-3">
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.bg }}>
+      <SectionHeader title="Video Consultations" subtitle="Today's Teleconsult Sessions" onBack={() => setScreen("doc_home")} theme={theme} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: 10 }} className="no-scrollbar">
         {VIDEO_CALLS.map((call, i) => (
-          <div key={i} style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: 16, padding: "14px", boxShadow: theme.mode === 'light' ? '0 1px 4px rgba(0,0,0,0.05)' : 'none' }}>
-            <div className="flex justify-between items-start mb-3">
+          <div key={i} style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 16, padding: "14px", animation: `fadeInUp ${0.1 + i * 0.08}s ease-out` }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
               <div>
-                <div style={{ color: theme.text, fontWeight: 700, fontSize: 13 }}>{call.patient}</div>
-                <div style={{ color: theme.textSec, fontSize: 10 }}>{call.id} · {call.duration}</div>
+                <div style={{ color: t.text, fontWeight: 700, fontSize: 13, fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic" }}>{call.patient}</div>
+                <div style={{ color: t.subText, fontSize: 10, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{call.id} · {call.duration}</div>
               </div>
-              <span style={{ background: call.status === "completed" ? "rgba(16,185,129,0.2)" : "rgba(37,99,235,0.2)", color: call.status === "completed" ? "#34d399" : "#93c5fd", fontSize: 9, padding: "3px 8px", borderRadius: 8, fontWeight: 600 }}>
-                {call.status === "completed" ? "✓ Done" : `⏰ ${call.time}`}
+              <span style={{ background: call.status === "completed" ? "rgba(16,185,129,0.2)" : "rgba(37,99,235,0.2)", color: call.status === "completed" ? "#34d399" : "#93c5fd", fontSize: 9, padding: "3px 8px", borderRadius: 8, fontWeight: 600, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+                {call.status === "completed" ? "✓ Done" : `${call.time}`}
               </span>
             </div>
             {call.status === "upcoming" && (
-              <button onClick={() => setInCall(true)} style={{ width: "100%", background: "linear-gradient(135deg,#2563eb,#1d4ed8)", border: "none", borderRadius: 10, padding: "10px 0", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
-                📹 Start Video Call
+              <button onClick={() => setInCall(true)} style={{ width: "100%", background: "linear-gradient(135deg,#2563eb,#1d4ed8)", border: "none", borderRadius: 10, padding: "10px 0", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontFamily: "'Playfair Display', Georgia, serif" }}>
+                <Video size={13} /> Start Video Call
               </button>
             )}
           </div>
@@ -769,483 +935,601 @@ const DocVideo = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme:
   );
 };
 
-const DocLeave = ({ setScreen, theme, showToast }: { setScreen: (s: Screen) => void; theme: Theme; showToast: (msg: string) => void }) => (
-  <div className="flex flex-col h-full" style={{ background: theme.bg }}>
-    <SectionHeader theme={theme} title="Leave & Coverage" subtitle="Apply / Track Leave" onBack={() => setScreen("doc_home")} />
-    <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 flex flex-col gap-4">
-      <div style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: 16, padding: "16px", boxShadow: theme.mode === 'light' ? '0 1px 4px rgba(0,0,0,0.05)' : 'none' }}>
-        <div style={{ color: theme.accent, fontSize: 12, fontWeight: 700, marginBottom: 12 }}>Apply for Leave</div>
-        <div className="flex flex-col gap-3">
-          <div>
-            <label style={{ color: theme.textSec, fontSize: 10, display: "block", marginBottom: 4 }}>LEAVE TYPE</label>
-            <select style={{ width: "100%", background: theme.inputBg, border: `1px solid ${theme.inputBorder}`, borderRadius: 10, padding: "8px 10px", color: theme.text, fontSize: 12, outline: "none" }}>
-              <option>Casual Leave</option><option>Medical Leave</option><option>Earned Leave</option><option>Emergency Leave</option>
-            </select>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
+const DocLeave = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: ThemeMode }) => {
+  const t = THEMES[theme];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.bg }}>
+      <SectionHeader title="Leave & Coverage" subtitle="Apply / Track Leave" onBack={() => setScreen("doc_home")} theme={theme} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "14px", display: "flex", flexDirection: "column", gap: 14 }} className="no-scrollbar">
+        <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 16, padding: "16px" }}>
+          <div style={{ color: t.accent, fontSize: 12, fontWeight: 700, marginBottom: 12, fontFamily: "'Playfair Display', Georgia, serif" }}>Apply for Leave</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <div>
-              <label style={{ color: theme.textSec, fontSize: 10, display: "block", marginBottom: 4 }}>FROM DATE</label>
-              <input type="date" defaultValue="2025-02-24" style={{ width: "100%", background: theme.inputBg, border: `1px solid ${theme.inputBorder}`, borderRadius: 10, padding: "8px 10px", color: theme.text, fontSize: 11, outline: "none", boxSizing: "border-box" }} />
+              <label style={{ color: t.subText, fontSize: 10, display: "block", marginBottom: 4, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>LEAVE TYPE</label>
+              <select style={{ width: "100%", background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 10, padding: "8px 10px", color: t.text, fontSize: 12, outline: "none", fontFamily: "'Libre Baskerville', Georgia, serif" }}>
+                <option>Casual Leave</option><option>Medical Leave</option><option>Earned Leave</option><option>Emergency Leave</option>
+              </select>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              {[{ label: "FROM DATE", val: "2025-02-24" }, { label: "TO DATE", val: "2025-02-26" }].map(d => (
+                <div key={d.label}>
+                  <label style={{ color: t.subText, fontSize: 10, display: "block", marginBottom: 4, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{d.label}</label>
+                  <input type="date" defaultValue={d.val} style={{ width: "100%", background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 10, padding: "8px 10px", color: t.text, fontSize: 11, outline: "none", boxSizing: "border-box" }} />
+                </div>
+              ))}
             </div>
             <div>
-              <label style={{ color: theme.textSec, fontSize: 10, display: "block", marginBottom: 4 }}>TO DATE</label>
-              <input type="date" defaultValue="2025-02-26" style={{ width: "100%", background: theme.inputBg, border: `1px solid ${theme.inputBorder}`, borderRadius: 10, padding: "8px 10px", color: theme.text, fontSize: 11, outline: "none", boxSizing: "border-box" }} />
+              <label style={{ color: t.subText, fontSize: 10, display: "block", marginBottom: 4, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>COVERAGE BY</label>
+              <select style={{ width: "100%", background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 10, padding: "8px 10px", color: t.text, fontSize: 12, outline: "none", fontFamily: "'Libre Baskerville', Georgia, serif" }}>
+                <option>Dr. Sunita Rao (Cardiology)</option><option>Dr. Kavitha Pillai (Cardiology)</option>
+              </select>
             </div>
+            <button style={{ background: "linear-gradient(135deg,#2563eb,#1d4ed8)", border: "none", borderRadius: 12, padding: "12px 0", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Playfair Display', Georgia, serif" }}>Submit Leave Request</button>
           </div>
-          <div>
-            <label style={{ color: theme.textSec, fontSize: 10, display: "block", marginBottom: 4 }}>COVERAGE BY</label>
-            <select style={{ width: "100%", background: theme.inputBg, border: `1px solid ${theme.inputBorder}`, borderRadius: 10, padding: "8px 10px", color: theme.text, fontSize: 12, outline: "none" }}>
-              <option>Dr. Sunita Rao (Cardiology)</option><option>Dr. Kavitha Pillai (Cardiology)</option><option>Dr. Rajesh S. (Cardiology)</option>
-            </select>
-          </div>
-          <button onClick={() => { showToast("Leave request submitted for approval"); setTimeout(() => setScreen('doc_home'), 1000); }} style={{ background: "linear-gradient(135deg,#2563eb,#1d4ed8)", border: "none", borderRadius: 12, padding: "12px 0", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Submit Leave Request</button>
+        </div>
+        <div>
+          <div style={{ color: t.accent, fontSize: 11, fontWeight: 700, marginBottom: 8, fontFamily: "'Playfair Display', Georgia, serif" }}>LEAVE BALANCE</div>
+          {[{ type: "Casual Leave", used: 3, total: 12 }, { type: "Medical Leave", used: 0, total: 7 }, { type: "Earned Leave", used: 8, total: 30 }].map(l => (
+            <div key={l.type} style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: "10px 12px", marginBottom: 6, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ color: t.text, fontSize: 12, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{l.type}</span>
+              <span style={{ color: t.accent, fontSize: 12, fontWeight: 700, fontFamily: "'Playfair Display', Georgia, serif" }}>{l.total - l.used} / {l.total} days</span>
+            </div>
+          ))}
         </div>
       </div>
-      <div>
-        <div style={{ color: theme.accent, fontSize: 11, fontWeight: 700, marginBottom: 8 }}>LEAVE BALANCE</div>
-        {[{ type: "Casual Leave", used: 3, total: 12 }, { type: "Medical Leave", used: 0, total: 7 }, { type: "Earned Leave", used: 8, total: 30 }].map(l => (
-          <div key={l.type} style={{ background: theme.cardBg, borderRadius: 12, padding: "10px 12px", marginBottom: 6, display: "flex", alignItems: "center", justifyContent: "space-between", border: `1px solid ${theme.cardBorder}` }}>
-            <span style={{ color: theme.text, fontSize: 12 }}>{l.type}</span>
-            <span style={{ color: theme.accent, fontSize: 12, fontWeight: 700 }}>{l.total - l.used} / {l.total} days</span>
+    </div>
+  );
+};
+
+const DocNotifications = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: ThemeMode }) => {
+  const t = THEMES[theme];
+  const notifIcons: Record<string, React.ElementType> = { critical: Siren, appointment: Calendar, ipd: BedDouble, admin: Bell };
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.bg }}>
+      <SectionHeader title="Notifications" subtitle="3 Critical · 2 New" onBack={() => setScreen("doc_home")} theme={theme} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: 10 }} className="no-scrollbar">
+        {DOC_NOTIFICATIONS.map((n, i) => {
+          const Icon = notifIcons[n.type] || Bell;
+          return (
+            <div key={i} style={{ background: n.type === "critical" ? "rgba(220,38,38,0.12)" : t.cardBg, border: `1px solid ${n.type === "critical" ? "rgba(239,68,68,0.3)" : t.border}`, borderRadius: 14, padding: "12px 14px", display: "flex", gap: 10, animation: `fadeInUp ${0.1 + i * 0.06}s ease-out` }}>
+              <div style={{ flexShrink: 0, padding: 6, background: n.type === "critical" ? "rgba(239,68,68,0.2)" : "rgba(37,99,235,0.12)", borderRadius: 10 }}>
+                <Icon size={16} color={n.type === "critical" ? "#fca5a5" : t.accent} />
+              </div>
+              <div>
+                <div style={{ color: n.type === "critical" ? "#fca5a5" : t.text, fontWeight: 700, fontSize: 12, fontFamily: "'Playfair Display', Georgia, serif" }}>{n.title}</div>
+                <div style={{ color: t.subText, fontSize: 10, marginTop: 2, fontFamily: "'Libre Baskerville', Georgia, serif", fontStyle: "italic" }}>{n.msg}</div>
+                <div style={{ color: t.subText, fontSize: 9, marginTop: 4, opacity: 0.6, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{n.time}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+const DocReports = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: ThemeMode }) => {
+  const t = THEMES[theme];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.bg }}>
+      <SectionHeader title="Reports & Analytics" subtitle="February 2025" onBack={() => setScreen("doc_home")} theme={theme} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "14px", display: "flex", flexDirection: "column", gap: 14 }} className="no-scrollbar">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+          <QuickStatCard label="Total OPD" value="1,580" IconComp={Users} color="linear-gradient(135deg,#2563eb,#3b82f6)" theme={theme} />
+          <QuickStatCard label="Satisfaction" value="4.9★" IconComp={Star} color="linear-gradient(135deg,#f59e0b,#fbbf24)" theme={theme} />
+          <QuickStatCard label="Revenue" value="₹4.2L" IconComp={TrendingUp} color="linear-gradient(135deg,#059669,#10b981)" theme={theme} />
+        </div>
+        <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 16, padding: "14px" }}>
+          <div style={{ color: t.accent, fontSize: 11, fontWeight: 700, marginBottom: 12, fontFamily: "'Playfair Display', Georgia, serif" }}>MONTHLY OPD TREND</div>
+          <ResponsiveContainer width="100%" height={130}>
+            <BarChart data={MONTHLY_OPD} margin={{ top: 0, right: 0, bottom: 0, left: -20 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={t.border} />
+              <XAxis dataKey="month" tick={{ fill: t.accent, fontSize: 9, fontFamily: "'Cormorant Garamond', Georgia, serif" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: t.accent, fontSize: 9 }} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={{ background: t.bg, border: `1px solid ${t.border}`, borderRadius: 10, color: t.text, fontSize: 11 }} />
+              <Bar dataKey="count" fill="url(#blueGrad2)" radius={[6,6,0,0]} />
+              <defs>
+                <linearGradient id="blueGrad2" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#2563eb" /><stop offset="100%" stopColor="#1a3a6e" />
+                </linearGradient>
+              </defs>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        {[{ label: "Avg OPD / Day", value: "52" }, { label: "Procedures Done", value: "28" }, { label: "Referrals Sent", value: "14" }, { label: "Follow-ups", value: "186" }].map(stat => (
+          <div key={stat.label} style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ color: t.subText, fontSize: 12, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{stat.label}</span>
+            <span style={{ color: t.text, fontWeight: 700, fontSize: 14, fontFamily: "'Playfair Display', Georgia, serif" }}>{stat.value}</span>
           </div>
         ))}
       </div>
     </div>
-  </div>
-);
+  );
+};
 
-const DocNotifications = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: Theme }) => (
-  <div className="flex flex-col h-full" style={{ background: theme.bg }}>
-    <SectionHeader theme={theme} title="Notifications" subtitle="3 Critical · 2 New" onBack={() => setScreen("doc_home")} />
-    <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-3 flex flex-col gap-3">
-      {DOC_NOTIFICATIONS.map((n, i) => (
-        <div key={i} style={{ background: n.type === "critical" ? "rgba(220,38,38,0.15)" : theme.cardBg, border: `1px solid ${n.type === "critical" ? "rgba(239,68,68,0.3)" : theme.cardBorder}`, borderRadius: 14, padding: "12px 14px", display: "flex", gap: 10, boxShadow: theme.mode === 'light' ? '0 1px 4px rgba(0,0,0,0.05)' : 'none' }}>
-          <div style={{ fontSize: 20, flexShrink: 0 }}>{n.type === "critical" ? "🚨" : n.type === "appointment" ? "📅" : n.type === "ipd" ? "🛏️" : "📢"}</div>
-          <div>
-            <div style={{ color: n.type === "critical" ? "#fca5a5" : theme.text, fontWeight: 700, fontSize: 12 }}>{n.title}</div>
-            <div style={{ color: theme.textSec, fontSize: 10, marginTop: 2 }}>{n.msg}</div>
-            <div style={{ color: theme.textSec, fontSize: 9, marginTop: 4 }}>{n.time}</div>
+const DocProfile = ({ setScreen, setRole, setCurrentScreen, theme, setTheme }: {
+  setScreen: (s: Screen) => void; setRole: (r: Role) => void;
+  setCurrentScreen: (s: Screen) => void; theme: ThemeMode; setTheme: (t: ThemeMode) => void;
+}) => {
+  const [activeTab, setActiveTab] = useState<"info" | "schedule" | "settings" | "reviews">("info");
+  const [notifs, setNotifs] = useState(true);
+  const [lang, setLang] = useState("English");
+  const t = THEMES[theme];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.bg }}>
+      <SectionHeader title="My Profile" subtitle="Project 10 Hospital Staff Portal" onBack={() => setScreen("doc_home")} theme={theme} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "14px", display: "flex", flexDirection: "column", gap: 12 }} className="no-scrollbar">
+        <div style={{ background: "linear-gradient(135deg,#1a3a6e,#2563eb)", borderRadius: 20, padding: "18px", textAlign: "center", animation: "scaleIn 0.35s ease-out" }}>
+          <DoctorAvatar size={68} />
+          <div style={{ color: "#ffffff", fontWeight: 800, fontSize: 17, marginTop: 10, fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic" }}>Dr. Arjun Mehta</div>
+          <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 11, marginTop: 2, fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic" }}>MD, DM Cardiology</div>
+          <div style={{ color: "#93c5fd", fontSize: 10, marginTop: 4, fontFamily: "'Libre Baskerville', Georgia, serif" }}>MCI Reg: DL/12345 · 18 yrs exp · ★ 4.9</div>
+          <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 8 }}>
+            {["Cardiology", "Electrophysiology"].map(s => (
+              <span key={s} style={{ background: "rgba(255,255,255,0.15)", borderRadius: 8, padding: "3px 10px", color: "#fff", fontSize: 9, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{s}</span>
+            ))}
           </div>
         </div>
-      ))}
-    </div>
-  </div>
-);
 
-const DocReports = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: Theme }) => (
-  <div className="flex flex-col h-full" style={{ background: theme.bg }}>
-    <SectionHeader theme={theme} title="Reports & Analytics" subtitle="February 2025" onBack={() => setScreen("doc_home")} />
-    <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 flex flex-col gap-4">
-      <div className="grid grid-cols-3 gap-2">
-        <QuickStatCard theme={theme} label="Total OPD" value="1,580" icon="👥" color="linear-gradient(135deg,#2563eb,#3b82f6)" />
-        <QuickStatCard theme={theme} label="Satisfaction" value="4.9★" icon="⭐" color="linear-gradient(135deg,#f59e0b,#fbbf24)" />
-        <QuickStatCard theme={theme} label="Revenue" value="₹4.2L" icon="💰" color="linear-gradient(135deg,#059669,#10b981)" />
-      </div>
-
-      <div style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: 16, padding: "14px", boxShadow: theme.mode === 'light' ? '0 1px 4px rgba(0,0,0,0.05)' : 'none' }}>
-        <div style={{ color: theme.accent, fontSize: 11, fontWeight: 700, marginBottom: 12 }}>MONTHLY OPD TREND</div>
-        <ResponsiveContainer width="100%" height={130}>
-          <BarChart data={MONTHLY_OPD} margin={{ top: 0, right: 0, bottom: 0, left: -20 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={theme.cardBorder} />
-            <XAxis dataKey="month" tick={{ fill: theme.textSec, fontSize: 9 }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fill: theme.textSec, fontSize: 9 }} axisLine={false} tickLine={false} />
-            <Tooltip contentStyle={{ background: theme.bg, border: `1px solid ${theme.cardBorder}`, borderRadius: 10, color: theme.text, fontSize: 11 }} />
-            <Bar dataKey="count" fill="url(#blueGrad)" radius={[6, 6, 0, 0]} />
-            <defs>
-              <linearGradient id="blueGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#2563eb" />
-                <stop offset="100%" stopColor="#1a3a6e" />
-              </linearGradient>
-            </defs>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      {[{ label: "Avg OPD / Day", value: "52" }, { label: "Procedures Done", value: "28" }, { label: "Referrals Sent", value: "14" }, { label: "Follow-ups", value: "186" }].map(stat => (
-        <div key={stat.label} style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: 12, padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ color: theme.textSec, fontSize: 12 }}>{stat.label}</span>
-          <span style={{ color: theme.text, fontWeight: 700, fontSize: 14 }}>{stat.value}</span>
+        <div style={{ display: "flex", background: t.inputBg, borderRadius: 14, padding: 4, gap: 3 }}>
+          {([{ id: "info", label: "Info" }, { id: "schedule", label: "Schedule" }, { id: "settings", label: "Settings" }, { id: "reviews", label: "Reviews" }] as const).map(tab => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+              style={{ flex: 1, padding: "7px 0", borderRadius: 10, border: "none", cursor: "pointer", fontSize: 10, fontWeight: activeTab === tab.id ? 700 : 400, background: activeTab === tab.id ? "linear-gradient(135deg,#2563eb,#1d4ed8)" : "transparent", color: activeTab === tab.id ? "#ffffff" : t.subText, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+              {tab.label}
+            </button>
+          ))}
         </div>
-      ))}
-    </div>
-  </div>
-);
 
-const DocProfile = ({ setScreen, setRole, setCurrentScreen, theme, toggleTheme, showToast }: { setScreen: (s: Screen) => void; setRole: (r: Role) => void; setCurrentScreen: (s: Screen) => void; theme: Theme; toggleTheme: () => void; showToast: (msg: string) => void }) => (
-  <div className="flex flex-col h-full" style={{ background: theme.bg }}>
-    <SectionHeader theme={theme} title="My Profile" subtitle="Project 10 Staff Portal" onBack={() => setScreen("doc_home")} />
-    <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 flex flex-col gap-4">
-      {/* Profile Header */}
-      <div style={{ background: "linear-gradient(135deg,#1a3a6e,#2563eb)", borderRadius: 20, padding: "20px", textAlign: "center" }}>
-        <div style={{ width: 72, height: 72, background: "rgba(255,255,255,0.15)", borderRadius: 24, margin: "0 auto 12px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, border: "3px solid rgba(255,255,255,0.3)" }}>👨‍⚕️</div>
-        <div style={{ color: "#fff", fontWeight: 800, fontSize: 18 }}>Dr. Arjun Mehta</div>
-        <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 11, marginTop: 2 }}>MD, DM Cardiology</div>
-        <div style={{ color: "#93c5fd", fontSize: 10, marginTop: 4 }}>MCI Reg: DL/12345 · Exp: 18 years · ⭐ 4.9</div>
-        <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 10 }}>
-          <span style={{ background: "rgba(255,255,255,0.15)", borderRadius: 8, padding: "4px 10px", color: "#fff", fontSize: 9, fontWeight: 600 }}>Cardiology</span>
-          <span style={{ background: "rgba(255,255,255,0.15)", borderRadius: 8, padding: "4px 10px", color: "#fff", fontSize: 9, fontWeight: 600 }}>Electrophysiology</span>
-        </div>
-      </div>
-
-      {/* Settings */}
-      {[
-        { icon: "🕐", label: "Availability Schedule", sub: "Mon-Fri 9AM-5PM, Sat 9AM-1PM", action: () => showToast("Opening Schedule Editor...") },
-        { icon: "🔔", label: "Notification Preferences", sub: "All alerts enabled", action: () => showToast("Opening Notification Settings...") },
-        { icon: "🌐", label: "Language", sub: "English, हिंदी", action: () => showToast("Changing Language...") },
-        { icon: "🌙", label: "Dark Mode", sub: theme.mode === "dark" ? "On" : "Off", action: toggleTheme },
-        { icon: "🔒", label: "Privacy & Security", sub: "2FA Active", action: () => showToast("Opening Security Settings...") },
-        { icon: "📞", label: "Emergency Contact", sub: "+91 99999 00001", action: () => showToast("Calling Admin Emergency Line...") },
-        { icon: "⭐", label: "My Reviews (128)", sub: "Avg Rating: 4.9/5", action: () => showToast("Viewing Patient Reviews...") },
-      ].map(item => (
-        <button key={item.label} onClick={item.action} style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: 14, padding: "12px 14px", display: "flex", alignItems: "center", gap: 12, width: "100%",
-        //  cursor: item.action ? "pointer" : "default", 
-         textAlign: "left", boxShadow: theme.mode === 'light' ? '0 1px 4px rgba(0,0,0,0.05)' : 'none' }}>
-          <span style={{ fontSize: 18 }}>{item.icon}</span>
-          <div style={{ flex: 1 }}>
-            <div style={{ color: theme.text, fontSize: 12, fontWeight: 600 }}>{item.label}</div>
-            <div style={{ color: theme.textSec, fontSize: 10, marginTop: 1 }}>{item.sub}</div>
+        {activeTab === "info" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, animation: "scaleIn 0.2s ease-out" }}>
+            {[
+              { Icon: Shield,      label: "Employee ID",       value: "P10-D-001" },
+              { Icon: Building2,   label: "Department",        value: "Cardiology, Electrophysiology" },
+              { Icon: Phone,       label: "Direct Line",       value: "+91 80-1234-0001" },
+              { Icon: Send,        label: "Email",             value: "arjun.mehta@p10hospital.in" },
+              { Icon: MapPin,      label: "OPD Room",          value: "Room 302, OPD Block A" },
+              { Icon: AlertCircle, label: "Emergency Contact", value: "+91 99999 00001" },
+            ].map(item => (
+              <div key={item.label} style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: "10px 14px", display: "flex", alignItems: "center", gap: 10 }}>
+                <item.Icon size={14} color={t.accent} />
+                <div>
+                  <div style={{ color: t.subText, fontSize: 9, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{item.label}</div>
+                  <div style={{ color: t.text, fontSize: 12, fontWeight: 600, fontFamily: "'Libre Baskerville', Georgia, serif" }}>{item.value}</div>
+                </div>
+              </div>
+            ))}
           </div>
-          {item.label === "Dark Mode" ? (
-            <div style={{ width: 32, height: 18, background: theme.mode === "dark" ? "#2563eb" : "#cbd5e1", borderRadius: 10, position: "relative", transition: "0.2s" }}>
-              <div style={{ width: 14, height: 14, background: "#fff", borderRadius: "50%", position: "absolute", top: 2, left: theme.mode === "dark" ? 16 : 2, transition: "0.2s" }} />
+        )}
+
+        {activeTab === "schedule" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, animation: "scaleIn 0.2s ease-out" }}>
+            <div style={{ color: t.accent, fontSize: 11, fontWeight: 700, fontFamily: "'Playfair Display', Georgia, serif" }}>WEEKLY SCHEDULE</div>
+            {[
+              { day: "Monday",    time: "9:00 AM – 1:00 PM, 2:00 PM – 5:00 PM", room: "OPD-302" },
+              { day: "Tuesday",   time: "9:00 AM – 1:00 PM",                     room: "OPD-302" },
+              { day: "Wednesday", time: "9:00 AM – 5:00 PM",                     room: "OPD-302" },
+              { day: "Thursday",  time: "9:00 AM – 1:00 PM",                     room: "OPD-302" },
+              { day: "Friday",    time: "9:00 AM – 1:00 PM, 2:00 PM – 5:00 PM", room: "Cardiac Cath Lab" },
+              { day: "Saturday",  time: "9:00 AM – 1:00 PM",                     room: "OPD-302" },
+              { day: "Sunday",    time: "On Call Only",                           room: "—" },
+            ].map(d => (
+              <div key={d.day} style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: "10px 12px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ color: t.text, fontSize: 12, fontWeight: 600, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{d.day}</div>
+                  <span style={{ background: "rgba(37,99,235,0.15)", color: "#93c5fd", fontSize: 9, padding: "2px 8px", borderRadius: 8, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{d.room}</span>
+                </div>
+                <div style={{ color: t.subText, fontSize: 10, marginTop: 2, fontFamily: "'Libre Baskerville', Georgia, serif" }}>{d.time}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === "settings" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, animation: "scaleIn 0.2s ease-out" }}>
+            <div style={{ color: t.accent, fontSize: 11, fontWeight: 700, fontFamily: "'Playfair Display', Georgia, serif" }}>APP SETTINGS</div>
+            <div style={{ background: "linear-gradient(135deg,#1a3a6e,#2563eb)", borderRadius: 14, padding: "14px" }}>
+              <div style={{ color: "#fff", fontSize: 12, fontWeight: 600, marginBottom: 10, fontFamily: "'Playfair Display', Georgia, serif", display: "flex", alignItems: "center", gap: 6 }}>
+                <Sun size={14} color="#fbbf24" /> Display Theme
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                {([{ id: "light" as ThemeMode, Icon: Sun, label: "Light" }, { id: "semidark" as ThemeMode, Icon: Sunset, label: "Semi Dark" }, { id: "dark" as ThemeMode, Icon: Moon, label: "Dark" }]).map(opt => (
+                  <button key={opt.id} onClick={() => setTheme(opt.id)}
+                    style={{ flex: 1, background: theme === opt.id ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.08)", border: `2px solid ${theme === opt.id ? "#fff" : "transparent"}`, borderRadius: 10, padding: "8px 4px", cursor: "pointer", color: "#fff", fontSize: 9, fontWeight: theme === opt.id ? 700 : 400, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, fontFamily: "'Cormorant Garamond', Georgia, serif", transition: "all 0.2s" }}>
+                    <opt.Icon size={14} color="#fff" />{opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          ) : (
-            <span style={{ color: theme.textSec, fontSize: 14 }}>›</span>
-          )}
-        </button>
-      ))}
+            <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "14px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ color: t.text, fontSize: 12, fontWeight: 600, fontFamily: "'Cormorant Garamond', Georgia, serif", display: "flex", alignItems: "center", gap: 5 }}><Bell size={13} /> Notifications</div>
+                  <div style={{ color: t.subText, fontSize: 9, marginTop: 2, fontFamily: "'Libre Baskerville', Georgia, serif" }}>{notifs ? "All alerts enabled" : "Muted"}</div>
+                </div>
+                <button onClick={() => setNotifs(n => !n)} style={{ background: notifs ? "#2563eb" : t.inputBg, border: `2px solid ${notifs ? "#2563eb" : t.border}`, borderRadius: 14, width: 44, height: 26, cursor: "pointer", position: "relative", transition: "all 0.2s" }}>
+                  <div style={{ width: 18, height: 18, background: "#fff", borderRadius: "50%", position: "absolute", top: 2, left: notifs ? 22 : 2, transition: "left 0.2s" }} />
+                </button>
+              </div>
+            </div>
+            <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "14px" }}>
+              <div style={{ color: t.text, fontSize: 12, fontWeight: 600, marginBottom: 8, fontFamily: "'Cormorant Garamond', Georgia, serif", display: "flex", alignItems: "center", gap: 5 }}><Globe size={13} /> Language</div>
+              <div style={{ display: "flex", gap: 6 }}>
+                {["English", "हिंदी", "ಕನ್ನಡ"].map(l => (
+                  <button key={l} onClick={() => setLang(l)} style={{ flex: 1, background: lang === l ? "linear-gradient(135deg,#2563eb,#1d4ed8)" : t.inputBg, border: `1px solid ${t.border}`, borderRadius: 10, padding: "8px 0", color: lang === l ? "#fff" : t.text, fontSize: 10, fontWeight: lang === l ? 700 : 400, cursor: "pointer", fontFamily: "'Cormorant Garamond', Georgia, serif", transition: "all 0.2s" }}>{l}</button>
+                ))}
+              </div>
+            </div>
+            {[{ Icon: Lock, label: "Privacy & Security", sub: "2FA Active · Biometric On" }, { Icon: Settings, label: "App Version", sub: "Project 10 v2.0 (Build 2025.2)" }].map(item => (
+              <div key={item.label} style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "12px 14px", display: "flex", alignItems: "center", gap: 12 }}>
+                <item.Icon size={16} color={t.accent} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ color: t.text, fontSize: 12, fontWeight: 600, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{item.label}</div>
+                  <div style={{ color: t.subText, fontSize: 10, marginTop: 1, fontFamily: "'Libre Baskerville', Georgia, serif" }}>{item.sub}</div>
+                </div>
+                <ChevronRight size={14} color={t.subText} />
+              </div>
+            ))}
+          </div>
+        )}
 
-      <button onClick={() => { setRole(null); setCurrentScreen("role"); }} style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 14, padding: "14px", color: "#fca5a5", fontSize: 13, fontWeight: 700, cursor: "pointer", marginTop: 4, marginBottom: 20 }}>
-        🚪 Secure Logout
-      </button>
+        {activeTab === "reviews" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, animation: "scaleIn 0.2s ease-out" }}>
+            <div style={{ background: "linear-gradient(135deg,rgba(245,158,11,0.12),rgba(251,191,36,0.06))", border: "1px solid rgba(245,158,11,0.3)", borderRadius: 16, padding: "14px", textAlign: "center" }}>
+              <div style={{ color: "#fbbf24", fontSize: 36, fontWeight: 900, fontFamily: "'Playfair Display', Georgia, serif" }}>4.9</div>
+              <div style={{ color: "#fbbf24", fontSize: 18, fontFamily: "'Playfair Display', Georgia, serif" }}>★★★★★</div>
+              <div style={{ color: t.subText, fontSize: 11, marginTop: 4, fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic" }}>Based on 128 reviews</div>
+            </div>
+            {[
+              { name: "Rajesh S.", rating: 5, comment: "Excellent doctor. Very thorough and caring.", date: "15 Feb 2025" },
+              { name: "Priya M.",  rating: 5, comment: "Best cardiologist in Bangalore. Highly recommend!", date: "10 Feb 2025" },
+              { name: "Vikram N.", rating: 4, comment: "Very knowledgeable. Explained everything clearly.", date: "05 Feb 2025" },
+            ].map((r, i) => (
+              <div key={i} style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "12px 14px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div style={{ color: t.text, fontSize: 12, fontWeight: 600, fontFamily: "'Playfair Display', Georgia, serif', fontStyle: 'italic' }}" }}>{r.name}</div>
+                  <div>
+                    <span style={{ color: "#fbbf24", fontSize: 10, fontFamily: "'Playfair Display', Georgia, serif" }}>{"★".repeat(r.rating)}</span>
+                    <div style={{ color: t.subText, fontSize: 9, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{r.date}</div>
+                  </div>
+                </div>
+                <div style={{ color: t.subText, fontSize: 11, marginTop: 4, fontFamily: "'Libre Baskerville', Georgia, serif", fontStyle: "italic" }}>{r.comment}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <button onClick={() => { setRole(null); setCurrentScreen("role"); }}
+          style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 14, padding: "14px", color: "#fca5a5", fontSize: 13, fontWeight: 700, cursor: "pointer", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontFamily: "'Playfair Display', Georgia, serif" }}>
+          <LogOut size={16} color="#fca5a5" /> Secure Logout
+        </button>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PATIENT SCREENS
 // ─────────────────────────────────────────────────────────────────────────────
 
-const PatHome = ({ setScreen, theme, showToast }: { setScreen: (s: Screen) => void; theme: Theme; showToast: (msg: string) => void }) => (
-  <div className="flex flex-col h-full" style={{ background: theme.bg }}>
-    {/* Header */}
-    <div style={{ background: theme.headerBg, padding: "16px 16px 24px" }}>
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <div style={{ color: theme.textSec, fontSize: 10 }}>UHID: P10-P-2024-5891</div>
-          <div style={{ color: theme.text, fontWeight: 800, fontSize: 16 }}>Hello, Rajesh! 👋</div>
-          <div style={{ color: theme.textSec, fontSize: 10, display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
-            <span>📍</span> Project 10, Bangalore
+const PatHome = ({ setScreen, theme, setTheme }: { setScreen: (s: Screen) => void; theme: ThemeMode; setTheme: (t: ThemeMode) => void }) => {
+  const t = THEMES[theme];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.bg }}>
+      <div style={{ background: t.headerBg, padding: "14px 16px 20px", animation: "fadeInDown 0.35s ease-out" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+          <div>
+            <div style={{ color: "rgba(255,255,255,0.65)", fontSize: 10, fontFamily: "'Cormorant Garamond', Georgia, serif", letterSpacing: 1 }}>UHID: P10-P-2024-5891</div>
+            <div style={{ color: "#ffffff", fontWeight: 800, fontSize: 16, fontFamily: "'Playfair Display', Georgia, serif" }}>Hello, Rajesh!</div>
+            <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 10, display: "flex", alignItems: "center", gap: 4, marginTop: 2, fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic" }}>
+              <MapPin size={10} color="rgba(255,255,255,0.6)" /> Project 10 Hospital, Bangalore
+            </div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+            <PatientAvatar size={46} />
+            <ThemeSwitcher theme={theme} setTheme={setTheme} />
           </div>
         </div>
-        <div style={{ width: 48, height: 48, background: "linear-gradient(135deg,#0ea5e9,#06b6d4)", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>👤</div>
+        <div style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 14, padding: "10px 14px" }}>
+          <div style={{ color: "rgba(255,255,255,0.65)", fontSize: 9, fontWeight: 600, marginBottom: 4, fontFamily: "'Cormorant Garamond', Georgia, serif", letterSpacing: 1, display: "flex", alignItems: "center", gap: 4 }}>
+            <Calendar size={9} color="rgba(255,255,255,0.65)" /> UPCOMING APPOINTMENT
+          </div>
+          <div style={{ color: "#ffffff", fontSize: 12, fontWeight: 700, fontFamily: "'Playfair Display', Georgia, serif" }}>Dr. Arjun Mehta — Cardiology</div>
+          <div style={{ color: "rgba(255,255,255,0.65)", fontSize: 10, marginTop: 2, fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic" }}>Tomorrow, 9:00 AM · OPD Room 302</div>
+        </div>
       </div>
-      {/* Upcoming Appointment */}
-      <div style={{ background: "rgba(37,99,235,0.25)", border: "1px solid rgba(37,99,235,0.4)", borderRadius: 14, padding: "10px 14px" }}>
-        <div style={{ color: "#ffffff", fontSize: 9, fontWeight: 600, marginBottom: 4 }}>📅 UPCOMING APPOINTMENT</div>
-        <div style={{ color: "#fff", fontSize: 12, fontWeight: 700 }}>Dr. Arjun Mehta — Cardiology</div>
-        <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 10, marginTop: 2 }}>Tomorrow, 9:00 AM · OPD Room 302</div>
+
+      <div style={{ flex: 1, overflowY: "auto", padding: "14px", display: "flex", flexDirection: "column", gap: 14 }} className="no-scrollbar">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+          {[
+            { Icon: Building2, label: "Book OPD",      screen: "pat_find_doctor", color: "linear-gradient(135deg,#1a3a6e,#2563eb)" },
+            { Icon: Video,     label: "Video Consult",  screen: "pat_video",       color: "linear-gradient(135deg,#0c4a6e,#0ea5e9)" },
+            { Icon: ShoppingBag, label: "Pharmacy",    screen: "pat_pharmacy",    color: "linear-gradient(135deg,#064e3b,#059669)" },
+            { Icon: FlaskConical, label: "Lab Tests",  screen: "pat_lab",         color: "linear-gradient(135deg,#4c1d95,#7c3aed)" },
+            { Icon: ClipboardList, label: "My Records", screen: "pat_records",    color: "linear-gradient(135deg,#78350f,#d97706)" },
+            { Icon: Activity,  label: "Vitals",         screen: "pat_vitals",      color: "linear-gradient(135deg,#134e4a,#14b8a6)" },
+          ].map(({ Icon, label, screen, color }) => (
+            <button key={label} onClick={() => setScreen(screen as Screen)}
+              style={{ background: color, border: "none", borderRadius: 16, padding: "14px 8px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, boxShadow: "0 4px 12px rgba(0,0,0,0.2)", transition: "transform 0.15s" }}
+              onMouseDown={e => (e.currentTarget.style.transform = "scale(0.95)")}
+              onMouseUp={e => (e.currentTarget.style.transform = "scale(1)")}>
+              <Icon size={22} color="#fff" strokeWidth={1.5} />
+              <span style={{ color: "#ffffff", fontSize: 9.5, fontWeight: 600, textAlign: "center", fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{label}</span>
+            </button>
+          ))}
+        </div>
+
+        <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 18, padding: "14px", animation: "fadeInUp 0.4s ease-out" }}>
+          <div style={{ color: t.text, fontWeight: 700, fontSize: 13, marginBottom: 12, fontFamily: "'Playfair Display', Georgia, serif" }}>My Health Summary</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
+            {[
+              { label: "Blood Pressure", value: "138/88", Icon: Activity, color: "#ef4444" },
+              { label: "Pulse", value: "76 bpm", Icon: Heart, color: "#f43f5e" },
+              { label: "SpO₂", value: "97%", Icon: Droplets, color: "#0ea5e9" },
+              { label: "Blood Sugar", value: "210 mg/dL", Icon: FlaskConical, color: "#8b5cf6" },
+            ].map(v => (
+              <div key={v.label} style={{ background: t.statCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: "10px 12px", display: "flex", alignItems: "center", gap: 8 }}>
+                <v.Icon size={16} color={v.color} />
+                <div>
+                  <div style={{ color: t.subText, fontSize: 8.5, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{v.label}</div>
+                  <div style={{ color: t.text, fontWeight: 700, fontSize: 12, fontFamily: "'Playfair Display', Georgia, serif" }}>{v.value}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 18, padding: "14px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+            <div style={{ color: t.text, fontWeight: 700, fontSize: 13, fontFamily: "'Playfair Display', Georgia, serif" }}>Quick Access</div>
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            {[
+              { label: "Billing", Icon: FileText, screen: "pat_billing" },
+              { label: "Family", Icon: Users, screen: "pat_family" },
+              { label: "Alerts", Icon: Bell, screen: "pat_notifications" },
+            ].map(a => (
+              <button key={a.label} onClick={() => setScreen(a.screen as Screen)}
+                style={{ flex: 1, background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: "10px 0", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 5, transition: "background 0.15s" }}>
+                <a.Icon size={16} color={t.accent} />
+                <span style={{ color: t.subText, fontSize: 9.5, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{a.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div style={{ height: 8 }} />
       </div>
     </div>
+  );
+};
 
-    <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 flex flex-col gap-4">
-      {/* Quick Actions */}
-      <div className="grid grid-cols-3 gap-3">
-        {[
-          { icon: "🏥", label: "Book OPD", screen: "pat_find_doctor", color: "linear-gradient(135deg,#1a3a6e,#2563eb)" },
-          { icon: "📹", label: "Video Consult", screen: "pat_video", color: "linear-gradient(135deg,#0c4a6e,#0ea5e9)" },
-          { icon: "💊", label: "Pharmacy", screen: "pat_pharmacy", color: "linear-gradient(135deg,#064e3b,#059669)" },
-          { icon: "🧪", label: "Lab Tests", screen: "pat_lab", color: "linear-gradient(135deg,#4c1d95,#7c3aed)" },
-          { icon: "📋", label: "My Records", screen: "pat_records", color: "linear-gradient(135deg,#78350f,#d97706)" },
-          { icon: "📊", label: "Vitals", screen: "pat_vitals", color: "linear-gradient(135deg,#134e4a,#14b8a6)" },
-        ].map(({ icon, label, screen, color }) => (
-          <button key={label} onClick={() => setScreen(screen as Screen)}
-            style={{ background: color, border: `1px solid ${theme.cardBorder}`, borderRadius: 16, padding: "14px 8px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-            <span style={{ fontSize: 24 }}>{icon}</span>
-            <span style={{ color: "#fff", fontSize: 9.5, fontWeight: 600, textAlign: "center" }}>{label}</span>
-          </button>
-        ))}
-      </div>
+const PatFindDoctor = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: ThemeMode }) => {
+  const [selectedDept, setSelectedDept] = useState<string | null>(null);
+  const t = THEMES[theme];
 
-      {/* SOS Button */}
-      <button onClick={() => setScreen("pat_sos")} style={{ background: "linear-gradient(135deg,#dc2626,#ef4444)", border: "none", borderRadius: 18, padding: "16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 12, cursor: "pointer", boxShadow: "0 0 20px rgba(220,38,38,0.4)", animation: "pulse-glow 2s infinite" }}>
-        <span style={{ fontSize: 28 }}>🚑</span>
-        <div style={{ textAlign: "left" }}>
-          <div style={{ color: "#fff", fontWeight: 800, fontSize: 15 }}>EMERGENCY SOS</div>
-          <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 10 }}>Tap for immediate ambulance assistance</div>
+  if (selectedDept) {
+    const doctors = DOCTORS_BY_DEPT[selectedDept] || FALLBACK_DOCTORS(selectedDept);
+    return (
+      <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.bg }}>
+        <SectionHeader title={selectedDept} subtitle="Select a Doctor" onBack={() => setSelectedDept(null)} theme={theme} />
+        <div style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: 10 }} className="no-scrollbar">
+          {doctors.map((doc, i) => (
+            <div key={doc.id} style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 16, padding: "14px", animation: `fadeInUp ${0.1 + i * 0.07}s ease-out` }}>
+              <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
+                <div style={{ width: 44, height: 44, background: "linear-gradient(135deg,#1a3a6e,#2563eb)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Stethoscope size={20} color="#fff" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <div style={{ color: t.text, fontWeight: 700, fontSize: 13, fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic" }}>{doc.name}</div>
+                  <div style={{ color: t.subText, fontSize: 10, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{doc.qual}</div>
+                  <div style={{ display: "flex", gap: 8, marginTop: 2 }}>
+                    <span style={{ color: "#fbbf24", fontSize: 9, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>★ {doc.rating}</span>
+                    <span style={{ color: t.subText, fontSize: 9, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{doc.exp}</span>
+                    <span style={{ color: t.accent, fontSize: 9, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{doc.fee}</span>
+                  </div>
+                </div>
+              </div>
+              {doc.available ? (
+                <button onClick={() => setScreen("pat_book_slot")}
+                  style={{ width: "100%", background: "linear-gradient(135deg,#2563eb,#1d4ed8)", border: "none", borderRadius: 10, padding: "9px 0", color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "'Playfair Display', Georgia, serif" }}>
+                  Book Appointment
+                </button>
+              ) : (
+                <div style={{ textAlign: "center", color: t.subText, fontSize: 10, padding: "8px 0", fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic" }}>Not available today</div>
+              )}
+            </div>
+          ))}
         </div>
-      </button>
-
-      {/* Health Tip */}
-      <div style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 16, padding: "14px" }}>
-        <div style={{ color: "#34d399", fontSize: 10, fontWeight: 700, marginBottom: 4 }}>💡 HEALTH TIP OF THE DAY</div>
-        <div style={{ color: theme.text, fontSize: 12, fontWeight: 600 }}>Stay Hydrated!</div>
-        <div style={{ color: theme.textSec, fontSize: 10, marginTop: 4 }}>Drinking 8-10 glasses of water daily helps maintain blood pressure and reduces cardiac risk by up to 25%.</div>
       </div>
+    );
+  }
 
-      {/* News & Events */}
-      <div>
-        <div style={{ color: theme.accent, fontSize: 11, fontWeight: 700, marginBottom: 8 }}>NEWS & EVENTS</div>
-        <div style={{ display: "flex", gap: 10, overflowX: "auto" }} className="no-scrollbar">
-          {[
-            { title: "Free Diabetes Camp", date: "Feb 22", color: "#2563eb" },
-            { title: "Blood Donation Drive", date: "Feb 25", color: "#dc2626" },
-            { title: "Health Talk: Cardiology", date: "Mar 1", color: "#059669" },
-          ].map(e => (
-            <button onClick={() => showToast(`Opening article: ${e.title}`)} key={e.title} style={{ background: `${e.color}20`, border: `1px solid ${e.color}40`, borderRadius: 14, padding: "10px 14px", minWidth: 130, flexShrink: 0, textAlign: "left", cursor: "pointer" }}>
-              <div style={{ color: theme.text, fontSize: 11, fontWeight: 700 }}>{e.title}</div>
-              <div style={{ color: theme.textSec, fontSize: 9, marginTop: 4 }}>📅 {e.date}</div>
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.bg }}>
+      <SectionHeader title="Find a Doctor" subtitle="Choose Department" onBack={() => setScreen("pat_home")} theme={theme} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: 10 }} className="no-scrollbar">
+        <div style={{ position: "relative", marginBottom: 4 }}>
+          <Search size={13} color={t.accent} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }} />
+          <input placeholder="Search speciality..." style={{ width: "100%", background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: "10px 14px 10px 30px", color: t.text, fontSize: 12, outline: "none", boxSizing: "border-box", fontFamily: "'Libre Baskerville', Georgia, serif" }} />
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+          {DEPARTMENTS.map((dept, i) => (
+            <button key={dept.name} onClick={() => setSelectedDept(dept.name)}
+              style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 16, padding: "14px 8px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, transition: "transform 0.15s, box-shadow 0.15s", animation: `scaleIn ${0.1 + i * 0.04}s ease-out` }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "scale(1.04)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 16px rgba(37,99,235,0.15)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "scale(1)"; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}>
+              <div style={{ background: dept.color + "22", borderRadius: 12, padding: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <dept.Icon size={20} color={dept.color} strokeWidth={1.5} />
+              </div>
+              <div style={{ color: t.text, fontSize: 9.5, fontWeight: 600, textAlign: "center", fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{dept.name}</div>
+              <div style={{ color: t.subText, fontSize: 8, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{dept.doctors} doctors</div>
             </button>
           ))}
         </div>
       </div>
     </div>
-  </div>
-);
-
-const PatFindDoctor = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: Theme }) => {
-  const [selDept, setSelDept] = useState<string | null>(null);
-
-  return (
-    <div className="flex flex-col h-full" style={{ background: theme.bg }}>
-      <SectionHeader theme={theme} title="Find Doctor" subtitle="Book OPD Appointment" onBack={() => setScreen("pat_home")} />
-      <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-3 flex flex-col gap-4">
-        {/* Search */}
-        <input placeholder="🔍 Search doctor or speciality..." style={{ width: "100%", background: theme.inputBg, border: `1px solid ${theme.inputBorder}`, borderRadius: 12, padding: "10px 14px", color: theme.text, fontSize: 13, outline: "none", boxSizing: "border-box" }} />
-
-        {/* Departments Grid */}
-        <div>
-          <div style={{ color: theme.accent, fontSize: 11, fontWeight: 700, marginBottom: 8 }}>DEPARTMENTS</div>
-          <div className="grid grid-cols-4 gap-2">
-            {DEPARTMENTS.map(d => (
-              <button key={d.name} onClick={() => setSelDept(d.name)}
-                style={{ background: selDept === d.name ? `${d.color}30` : theme.cardBg, border: `1px solid ${selDept === d.name ? d.color : theme.cardBorder}`, borderRadius: 14, padding: "10px 6px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, boxShadow: theme.mode === 'light' ? '0 1px 4px rgba(0,0,0,0.05)' : 'none' }}>
-                <span style={{ fontSize: 20 }}>{d.icon}</span>
-                <span style={{ color: theme.text, fontSize: 8.5, fontWeight: 600, textAlign: "center", lineHeight: "1.2" }}>{d.name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Doctors List */}
-        <div>
-          <div style={{ color: theme.accent, fontSize: 11, fontWeight: 700, marginBottom: 8 }}>
-            {selDept ? `${selDept.toUpperCase()} SPECIALISTS` : "ALL DOCTORS"}
-          </div>
-          <div className="flex flex-col gap-3">
-            {DOCTORS_LIST.filter(d => !selDept || d.dept === selDept || true).map(doc => (
-              <div key={doc.id} style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: 16, padding: "14px", boxShadow: theme.mode === 'light' ? '0 1px 4px rgba(0,0,0,0.05)' : 'none' }}>
-                <div className="flex items-center gap-3 mb-3">
-                  <div style={{ width: 44, height: 44, background: "linear-gradient(135deg,#1a3a6e,#2563eb)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>👨‍⚕️</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ color: theme.text, fontWeight: 700, fontSize: 12 }}>{doc.name}</div>
-                    <div style={{ color: theme.textSec, fontSize: 10 }}>{doc.dept} · {doc.exp} exp</div>
-                    <div style={{ color: "#fbbf24", fontSize: 10 }}>⭐ {doc.rating} · Fee: {doc.fee}</div>
-                  </div>
-                  <span style={{ background: doc.available ? "rgba(16,185,129,0.2)" : "rgba(239,68,68,0.2)", color: doc.available ? "#34d399" : "#fca5a5", fontSize: 9, padding: "3px 8px", borderRadius: 8, fontWeight: 600 }}>
-                    {doc.available ? "Available" : "Full"}
-                  </span>
-                </div>
-                {doc.available && (
-                  <button onClick={() => setScreen("pat_book_slot")} style={{ width: "100%", background: "linear-gradient(135deg,#2563eb,#1d4ed8)", border: "none", borderRadius: 10, padding: "9px 0", color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
-                    Book Appointment →
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
   );
 };
 
-const PatBookSlot = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: Theme }) => {
-  const [selSlot, setSelSlot] = useState<string | null>(null);
+const PatBookSlot = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: ThemeMode }) => {
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [booked, setBooked] = useState(false);
-  const slots = { morning: ["8:30 AM", "9:00 AM", "9:30 AM", "10:00 AM"], afternoon: ["2:00 PM", "2:30 PM", "3:00 PM"], evening: ["4:00 PM", "4:30 PM", "5:00 PM"] };
+  const t = THEMES[theme];
+  const slots = ["9:00 AM", "10:30 AM", "2:00 PM", "4:30 PM"];
 
   if (booked) return (
-    <div className="flex flex-col h-full items-center justify-center px-6 gap-6" style={{ background: theme.bg }}>
-      <div style={{ fontSize: 72 }}>✅</div>
-      <div style={{ color: "#34d399", fontWeight: 800, fontSize: 22, textAlign: "center" }}>Appointment Confirmed!</div>
-      <div style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 18, padding: "20px", width: "100%", textAlign: "center" }}>
-        <div style={{ color: theme.textSec, fontSize: 10, marginBottom: 4 }}>BOOKING ID</div>
-        <div style={{ color: theme.text, fontWeight: 800, fontSize: 18 }}>P10-APT-2025-{Math.floor(Math.random() * 9000 + 1000)}</div>
-        <div style={{ color: theme.text, fontSize: 12, marginTop: 10 }}>Dr. Arjun Mehta · Cardiology</div>
-        <div style={{ color: theme.accent, fontSize: 11, marginTop: 4 }}>Tomorrow · {selSlot} · OPD 302</div>
-        <div style={{ color: theme.textSec, fontSize: 10, marginTop: 6 }}>Fee: ₹800 (Pay at counter)</div>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", background: t.bg, padding: "0 24px", gap: 16 }}>
+      <div style={{ background: "rgba(16,185,129,0.12)", borderRadius: 32, padding: 24, animation: "scaleIn 0.3s ease-out" }}>
+        <CheckCircle size={56} color="#10b981" strokeWidth={1.5} />
       </div>
-      <button onClick={() => setScreen("pat_home")} style={{ background: "linear-gradient(135deg,#2563eb,#1d4ed8)", border: "none", borderRadius: 14, padding: "14px 32px", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>Go to Home</button>
+      <div style={{ color: "#34d399", fontWeight: 800, fontSize: 20, textAlign: "center", fontFamily: "'Playfair Display', Georgia, serif" }}>Appointment Confirmed!</div>
+      <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 20, padding: "18px", width: "100%" }}>
+        <div style={{ color: t.subText, fontSize: 10, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>BOOKING REFERENCE</div>
+        <div style={{ color: t.text, fontWeight: 800, fontSize: 16, marginTop: 2, fontFamily: "'Playfair Display', Georgia, serif" }}>P10-OPD-{Math.floor(Math.random() * 90000 + 10000)}</div>
+        <div style={{ color: t.subText, fontSize: 11, marginTop: 8, fontFamily: "'Libre Baskerville', Georgia, serif", fontStyle: "italic" }}>Dr. Arjun Mehta · Cardiology<br />Tomorrow · {selectedSlot} · OPD Room 302</div>
+      </div>
+      <button onClick={() => setScreen("pat_home")} style={{ background: "linear-gradient(135deg,#2563eb,#1d4ed8)", border: "none", borderRadius: 14, padding: "12px 28px", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Playfair Display', Georgia, serif" }}>Back to Home</button>
     </div>
   );
 
   return (
-    <div className="flex flex-col h-full" style={{ background: theme.bg }}>
-      <SectionHeader theme={theme} title="Book Slot" subtitle="Dr. Arjun Mehta · Cardiology" onBack={() => setScreen("pat_find_doctor")} />
-      <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-3 flex flex-col gap-4">
-        {/* Doctor Info */}
-        <div style={{ background: "linear-gradient(135deg,#1a3a6e,#2563eb)", borderRadius: 16, padding: "14px", display: "flex", gap: 12, alignItems: "center" }}>
-          <div style={{ fontSize: 36 }}>👨‍⚕️</div>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.bg }}>
+      <SectionHeader title="Book Appointment" subtitle="Dr. Arjun Mehta · Cardiology" onBack={() => setScreen("pat_find_doctor")} theme={theme} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "14px", display: "flex", flexDirection: "column", gap: 14 }} className="no-scrollbar">
+        <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 16, padding: "14px", display: "flex", gap: 12 }}>
+          <div style={{ width: 52, height: 52, background: "linear-gradient(135deg,#1a3a6e,#2563eb)", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Stethoscope size={24} color="#fff" strokeWidth={1.5} />
+          </div>
           <div>
-            <div style={{ color: "#fff", fontWeight: 800, fontSize: 14 }}>Dr. Arjun Mehta</div>
-            <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 10 }}>MD, DM Cardiology · 18 Years Exp</div>
-            <div style={{ color: "#fbbf24", fontSize: 10, marginTop: 2 }}>⭐ 4.9 · 500+ Patients</div>
+            <div style={{ color: t.text, fontWeight: 700, fontSize: 14, fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic" }}>Dr. Arjun Mehta</div>
+            <div style={{ color: t.subText, fontSize: 10, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>MD, DM Cardiology · 18 yrs</div>
+            <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+              <span style={{ color: "#fbbf24", fontSize: 10, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>★ 4.9</span>
+              <span style={{ color: t.accent, fontSize: 10, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>₹800 / session</span>
+            </div>
           </div>
         </div>
-
-        {/* Date Selection */}
         <div>
-          <div style={{ color: theme.accent, fontSize: 11, fontWeight: 700, marginBottom: 8 }}>SELECT DATE</div>
-          <div style={{ display: "flex", gap: 8, overflowX: "auto" }} className="no-scrollbar">
-            {["19 Feb\nWed", "20 Feb\nThu", "21 Feb\nFri", "24 Feb\nMon", "25 Feb\nTue"].map((d, i) => (
-              <button key={i} style={{ background: i === 1 ? "linear-gradient(135deg,#2563eb,#1d4ed8)" : theme.cardBg, border: `1px solid ${i === 1 ? "#2563eb" : theme.cardBorder}`, borderRadius: 12, padding: "8px 14px", cursor: "pointer", flexShrink: 0, textAlign: "center" }}>
-                {d.split("\n").map((line, j) => <div key={j} style={{ color: i === 1 ? "#fff" : theme.text, fontSize: j === 0 ? 12 : 9, fontWeight: j === 0 ? 700 : 400 }}>{line}</div>)}
+          <div style={{ color: t.accent, fontSize: 10, fontWeight: 700, marginBottom: 8, letterSpacing: 1, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>SELECT DATE</div>
+          <input type="date" defaultValue="2025-02-20" style={{ width: "100%", background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: "10px 14px", color: t.text, fontSize: 12, outline: "none", boxSizing: "border-box" }} />
+        </div>
+        <div>
+          <div style={{ color: t.accent, fontSize: 10, fontWeight: 700, marginBottom: 8, letterSpacing: 1, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>AVAILABLE SLOTS</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
+            {slots.map(slot => (
+              <button key={slot} onClick={() => setSelectedSlot(slot)}
+                style={{ background: selectedSlot === slot ? "linear-gradient(135deg,#2563eb,#1d4ed8)" : t.inputBg, border: `1px solid ${selectedSlot === slot ? "#2563eb" : t.border}`, borderRadius: 12, padding: "10px 0", color: selectedSlot === slot ? "#fff" : t.text, fontSize: 12, fontWeight: selectedSlot === slot ? 700 : 400, cursor: "pointer", fontFamily: "'Cormorant Garamond', Georgia, serif", transition: "all 0.2s" }}>
+                {slot}
               </button>
             ))}
           </div>
         </div>
-
-        {/* Time Slots */}
-        {(Object.entries(slots) as [string, string[]][]).map(([session, times]) => (
-          <div key={session}>
-            <div style={{ color: theme.textSec, fontSize: 10, fontWeight: 600, marginBottom: 6, textTransform: "uppercase" }}>🌅 {session}</div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {times.map(t => (
-                <button key={t} onClick={() => setSelSlot(t)}
-                  style={{ background: selSlot === t ? "linear-gradient(135deg,#2563eb,#1d4ed8)" : theme.cardBg, border: `1px solid ${selSlot === t ? "#2563eb" : theme.cardBorder}`, borderRadius: 10, padding: "8px 12px", cursor: "pointer", color: selSlot === t ? "#fff" : theme.text, fontSize: 11, fontWeight: 600 }}>
-                  {t}
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
-
-        <button onClick={() => selSlot && setBooked(true)} disabled={!selSlot}
-          style={{ background: selSlot ? "linear-gradient(135deg,#2563eb,#1d4ed8)" : theme.inputBg, border: "none", borderRadius: 14, padding: "14px 0", color: selSlot ? "#fff" : theme.textSec, fontSize: 14, fontWeight: 700, cursor: selSlot ? "pointer" : "not-allowed", opacity: selSlot ? 1 : 0.5, marginTop: 8, marginBottom: 16 }}>
-          {selSlot ? `Confirm Slot — ${selSlot}` : "Select a Time Slot"}
+        <button disabled={!selectedSlot} onClick={() => setBooked(true)}
+          style={{ background: selectedSlot ? "linear-gradient(135deg,#2563eb,#1d4ed8)" : "rgba(37,99,235,0.3)", border: "none", borderRadius: 14, padding: "14px", color: "#fff", fontSize: 14, fontWeight: 700, cursor: selectedSlot ? "pointer" : "not-allowed", fontFamily: "'Playfair Display', Georgia, serif" }}>
+          {selectedSlot ? `Confirm Booking · ${selectedSlot} →` : "Select a Time Slot"}
         </button>
       </div>
     </div>
   );
 };
 
-const PatAppointments = ({ setScreen, theme, showToast }: { setScreen: (s: Screen) => void; theme: Theme; showToast: (msg: string) => void }) => (
-  <div className="flex flex-col h-full" style={{ background: theme.bg }}>
-    <SectionHeader theme={theme} title="My Appointments" subtitle="Upcoming & Past" onBack={() => setScreen("pat_home")} />
-    <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-3 flex flex-col gap-3">
-      <div style={{ color: theme.accent, fontSize: 11, fontWeight: 700 }}>UPCOMING</div>
-      {[
-        { doctor: "Dr. Arjun Mehta", dept: "Cardiology", date: "20 Feb 2025", time: "9:00 AM", room: "OPD-302", status: "Confirmed", id: "P10-APT-2025-4521" },
-        { doctor: "Dr. Sunita Rao", dept: "Neurology", date: "28 Feb 2025", time: "11:00 AM", room: "OPD-210", status: "Confirmed", id: "P10-APT-2025-4589" },
-      ].map(a => (
-        <div key={a.id} style={{ background: "rgba(37,99,235,0.15)", border: "1px solid rgba(37,99,235,0.25)", borderRadius: 16, padding: "14px" }}>
-          <div className="flex justify-between items-start mb-2">
-            <div>
-              <div style={{ color: theme.text, fontWeight: 700, fontSize: 12 }}>{a.doctor}</div>
-              <div style={{ color: theme.textSec, fontSize: 10 }}>{a.dept} · {a.room}</div>
-            </div>
-            <span style={{ background: "rgba(16,185,129,0.2)", color: "#34d399", fontSize: 9, padding: "3px 8px", borderRadius: 8, fontWeight: 600 }}>✓ {a.status}</span>
-          </div>
-          <div style={{ color: theme.textSec, fontSize: 10, marginBottom: 10 }}>📅 {a.date} · ⏰ {a.time} · 🪪 {a.id}</div>
-          <div className="flex gap-2">
-            <button onClick={() => showToast("Request to reschedule sent")} style={{ flex: 1, background: theme.inputBg, border: `1px solid ${theme.inputBorder}`, borderRadius: 10, padding: "7px 0", color: theme.accent, fontSize: 10, fontWeight: 600, cursor: "pointer" }}>🔄 Reschedule</button>
-            <button onClick={() => showToast("Cancellation not allowed < 24hrs")} style={{ flex: 1, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, padding: "7px 0", color: "#fca5a5", fontSize: 10, fontWeight: 600, cursor: "pointer" }}>✕ Cancel</button>
-            <button onClick={() => setScreen("pat_video")} style={{ flex: 1, background: theme.accent, border: `1px solid ${theme.accent}`, borderRadius: 10, padding: "7px 0", color: "#fff", fontSize: 10, fontWeight: 600, cursor: "pointer" }}>📹 Join</button>
-          </div>
-        </div>
-      ))}
-
-      <div style={{ color: theme.accent, fontSize: 11, fontWeight: 700, marginTop: 8 }}>PAST VISITS</div>
-      {[
-        { doctor: "Dr. Arjun Mehta", dept: "Cardiology", date: "15 Jan 2025", diag: "Hypertension Review" },
-        { doctor: "Dr. Meera Nair", dept: "Pediatrics", date: "02 Dec 2024", diag: "Routine Checkup" },
-      ].map((a, i) => (
-        <div key={i} style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: 14, padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: theme.mode === 'light' ? '0 1px 4px rgba(0,0,0,0.05)' : 'none' }}>
-          <div>
-            <div style={{ color: theme.text, fontSize: 11, fontWeight: 600 }}>{a.doctor}</div>
-            <div style={{ color: theme.textSec, fontSize: 9 }}>{a.dept} · {a.date}</div>
-            <div style={{ color: theme.textSec, fontSize: 9 }}>{a.diag}</div>
-          </div>
-          <button onClick={() => showToast("Downloading visit summary...")} style={{ background: theme.inputBg, border: "none", borderRadius: 10, padding: "6px 10px", color: theme.accent, fontSize: 9, fontWeight: 600, cursor: "pointer" }}>📄 View</button>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-const PatRecords = ({ setScreen, theme, showToast }: { setScreen: (s: Screen) => void; theme: Theme; showToast: (msg: string) => void }) => (
-  <div className="flex flex-col h-full" style={{ background: theme.bg }}>
-    <SectionHeader theme={theme} title="My Health Records" subtitle="EMR · Prescriptions · Lab Reports" onBack={() => setScreen("pat_home")} />
-    <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-3 flex flex-col gap-4">
-      {/* Upload */}
-      <button onClick={() => showToast("Opening file picker...")} style={{ width: "100%", background: "rgba(37,99,235,0.1)", border: "2px dashed rgba(37,99,235,0.3)", borderRadius: 16, padding: "16px", textAlign: "center", cursor: "pointer" }}>
-        <div style={{ fontSize: 28, marginBottom: 6 }}>📁</div>
-        <div style={{ color: theme.accent, fontSize: 12, fontWeight: 600 }}>Upload Documents</div>
-        <div style={{ color: theme.textSec, fontSize: 10, marginTop: 2 }}>PDF, JPG, PNG · Max 10MB</div>
-      </button>
-
-      {/* Prescriptions */}
-      <div>
-        <div style={{ color: theme.accent, fontSize: 11, fontWeight: 700, marginBottom: 8 }}>PRESCRIPTIONS</div>
-        {[
-          { date: "15 Jan 2025", doc: "Dr. Arjun Mehta", meds: "Amlodipine, Pantoprazole, Aspirin" },
-          { date: "02 Dec 2024", doc: "Dr. Meera Nair", meds: "Paracetamol, Cetirizine, Vitamin C" },
-        ].map((rx, i) => (
-          <div key={i} style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: 14, padding: "12px 14px", marginBottom: 8, boxShadow: theme.mode === 'light' ? '0 1px 4px rgba(0,0,0,0.05)' : 'none' }}>
-            <div className="flex justify-between items-start">
-              <div>
-                <div style={{ color: theme.text, fontSize: 12, fontWeight: 600 }}>Rx — {rx.date}</div>
-                <div style={{ color: theme.textSec, fontSize: 10 }}>{rx.doc}</div>
-                <div style={{ color: theme.textSec, fontSize: 9, marginTop: 2 }}>{rx.meds}</div>
+const PatAppointments = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: ThemeMode }) => {
+  const t = THEMES[theme];
+  const apts = [
+    { doctor: "Dr. Arjun Mehta", dept: "Cardiology", date: "20 Feb 2025", time: "9:00 AM", status: "Upcoming", id: "P10-OPD-78291" },
+    { doctor: "Dr. Sunita Rao",  dept: "Neurology",  date: "15 Feb 2025", time: "11:00 AM", status: "Completed", id: "P10-OPD-77850" },
+    { doctor: "Dr. Meera Nair",  dept: "Pediatrics", date: "01 Feb 2025", time: "8:30 AM", status: "Completed", id: "P10-OPD-76210" },
+  ];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.bg }}>
+      <SectionHeader title="My Appointments" subtitle={`${apts.length} appointments`} onBack={() => setScreen("pat_home")} theme={theme} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: 10 }} className="no-scrollbar">
+        {apts.map((a, i) => (
+          <div key={a.id} style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 16, padding: "14px", animation: `fadeInUp ${0.1 + i * 0.07}s ease-out` }}>
+            <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
+              <div style={{ width: 40, height: 40, background: "linear-gradient(135deg,#1a3a6e,#2563eb)", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Stethoscope size={18} color="#fff" strokeWidth={1.5} />
               </div>
-              <button onClick={() => showToast("Downloading Prescription PDF...")} style={{ background: theme.inputBg, border: "none", borderRadius: 10, padding: "6px 10px", color: theme.accent, fontSize: 9, fontWeight: 600, cursor: "pointer" }}>⬇ PDF</button>
+              <div style={{ flex: 1 }}>
+                <div style={{ color: t.text, fontWeight: 700, fontSize: 13, fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic" }}>{a.doctor}</div>
+                <div style={{ color: t.subText, fontSize: 10, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{a.dept} · {a.id}</div>
+              </div>
+              <StatusBadge status={a.status} />
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ color: t.subText, fontSize: 10, display: "flex", alignItems: "center", gap: 4, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+                <Calendar size={10} /> {a.date} · {a.time}
+              </div>
+              {a.status === "Upcoming" && (
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "5px 10px", color: "#fca5a5", fontSize: 9, cursor: "pointer", fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Cancel</button>
+                  <button style={{ background: "rgba(37,99,235,0.15)", border: "none", borderRadius: 8, padding: "5px 10px", color: t.accent, fontSize: 9, fontWeight: 600, cursor: "pointer", fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Reschedule</button>
+                </div>
+              )}
             </div>
           </div>
         ))}
+        <button onClick={() => setScreen("pat_find_doctor")} style={{ background: "linear-gradient(135deg,#2563eb,#1d4ed8)", border: "none", borderRadius: 14, padding: "14px", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Playfair Display', Georgia, serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+          <Plus size={16} /> Book New Appointment
+        </button>
       </div>
+    </div>
+  );
+};
 
-      {/* Lab Reports */}
-      <div>
-        <div style={{ color: theme.accent, fontSize: 11, fontWeight: 700, marginBottom: 8 }}>LAB REPORTS</div>
-        {[
-          { date: "10 Feb 2025", test: "CBC, LFT, KFT", status: "Ready" },
-          { date: "15 Jan 2025", test: "HbA1c, Lipid Profile", status: "Ready" },
-          { date: "05 Dec 2024", test: "Thyroid Profile", status: "Ready" },
-        ].map((r, i) => (
-          <div key={i} style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: 14, padding: "12px 14px", marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: theme.mode === 'light' ? '0 1px 4px rgba(0,0,0,0.05)' : 'none' }}>
-            <div>
-              <div style={{ color: theme.text, fontSize: 11, fontWeight: 600 }}>{r.test}</div>
-              <div style={{ color: theme.textSec, fontSize: 9 }}>🗓 {r.date}</div>
+const PatRecords = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: ThemeMode }) => {
+  const t = THEMES[theme];
+  const records = [
+    { type: "Prescription", doctor: "Dr. Arjun Mehta", date: "15 Feb 2025", desc: "Amlodipine 5mg · Pantoprazole 40mg", status: "Active" },
+    { type: "Lab Report",   doctor: "Pathology Lab",   date: "14 Feb 2025", desc: "CBC, LFT — Normal range",            status: "Ready" },
+    { type: "Prescription", doctor: "Dr. Sunita Rao",  date: "01 Feb 2025", desc: "Gabapentin 300mg · Vitamin B12",    status: "Active" },
+    { type: "Discharge",    doctor: "Cardiology Dept", date: "10 Jan 2025", desc: "AMI — Complete discharge summary",  status: "Archived" },
+  ];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.bg }}>
+      <SectionHeader title="Health Records" subtitle="Prescriptions · Reports · Discharge" onBack={() => setScreen("pat_home")} theme={theme} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: 10 }} className="no-scrollbar">
+        {records.map((r, i) => (
+          <div key={i} style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 16, padding: "14px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", animation: `fadeInUp ${0.1 + i * 0.07}s ease-out` }}>
+            <div style={{ display: "flex", gap: 10 }}>
+              <div style={{ width: 36, height: 36, background: r.type === "Lab Report" ? "rgba(124,58,237,0.2)" : "rgba(37,99,235,0.2)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                {r.type === "Lab Report" ? <FlaskConical size={16} color="#a78bfa" /> : <FileText size={16} color="#93c5fd" />}
+              </div>
+              <div>
+                <div style={{ color: t.text, fontSize: 12, fontWeight: 600, fontFamily: "'Playfair Display', Georgia, serif" }}>{r.type}</div>
+                <div style={{ color: t.subText, fontSize: 10, fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic" }}>{r.doctor}</div>
+                <div style={{ color: t.subText, fontSize: 9, marginTop: 2, fontFamily: "'Libre Baskerville', Georgia, serif" }}>{r.desc}</div>
+                <div style={{ color: t.subText, fontSize: 9, marginTop: 2, display: "flex", alignItems: "center", gap: 3, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+                  <Calendar size={9} />{r.date}
+                </div>
+              </div>
             </div>
             <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-              <span style={{ background: "rgba(16,185,129,0.15)", color: "#34d399", fontSize: 9, padding: "3px 8px", borderRadius: 8, fontWeight: 600 }}>✓ {r.status}</span>
-              <button onClick={() => showToast("Opening report viewer...")} style={{ background: theme.inputBg, border: "none", borderRadius: 10, padding: "6px 10px", color: theme.accent, fontSize: 9, fontWeight: 600, cursor: "pointer" }}>View</button>
+              <span style={{ background: "rgba(16,185,129,0.15)", color: "#34d399", fontSize: 9, padding: "3px 8px", borderRadius: 8, fontWeight: 600, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>✓ {r.status}</span>
+              <button style={{ background: "rgba(37,99,235,0.15)", border: "none", borderRadius: 10, padding: "6px 10px", color: t.accent, fontSize: 9, fontWeight: 600, cursor: "pointer", fontFamily: "'Cormorant Garamond', Georgia, serif" }}>View</button>
             </div>
           </div>
         ))}
       </div>
     </div>
-  </div>
-);
+  );
+};
 
-const PatLab = ({ setScreen, theme, showToast }: { setScreen: (s: Screen) => void; theme: Theme; showToast: (msg: string) => void }) => {
+const PatLab = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: ThemeMode }) => {
   const [cart, setCart] = useState<string[]>([]);
   const [trackMode, setTrackMode] = useState(false);
+  const t = THEMES[theme];
 
   if (trackMode) return (
-    <div className="flex flex-col h-full" style={{ background: theme.bg }}>
-      <SectionHeader theme={theme} title="Track Sample" subtitle="Order: P10-LAB-2025-0891" onBack={() => setTrackMode(false)} />
-      <div className="flex-1 flex flex-col items-center justify-center px-6 gap-6">
-        {[{ step: "Sample Collected", done: true }, { step: "In Transit to Lab", done: true }, { step: "Processing", done: true }, { step: "Report Ready", done: false }].map((s, i, arr) => (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.bg }}>
+      <SectionHeader title="Track Sample" subtitle="Order: P10-LAB-2025-0891" onBack={() => setTrackMode(false)} theme={theme} />
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 24px", gap: 20 }}>
+        {[{ step: "Sample Collected", done: true }, { step: "In Transit to Lab", done: true }, { step: "Processing", done: true }, { step: "Report Ready", done: false }].map((s, i) => (
           <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, width: "100%" }}>
-            <div style={{ width: 36, height: 36, borderRadius: "50%", background: s.done ? "linear-gradient(135deg,#059669,#10b981)" : theme.inputBg, border: `2px solid ${s.done ? "#10b981" : theme.inputBorder}`, display: "flex", alignItems: "center", justifyContent: "center", color: s.done ? "#fff" : theme.textSec, fontSize: 14, flexShrink: 0 }}>
-              {s.done ? "✓" : i + 1}
+            <div style={{ width: 36, height: 36, borderRadius: "50%", background: s.done ? "linear-gradient(135deg,#059669,#10b981)" : t.inputBg, border: `2px solid ${s.done ? "#10b981" : t.border}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              {s.done ? <CheckCircle size={16} color="#fff" /> : <span style={{ color: t.subText, fontSize: 12, fontWeight: 700, fontFamily: "'Playfair Display', Georgia, serif" }}>{i + 1}</span>}
             </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ color: s.done ? theme.text : theme.textSec, fontSize: 12, fontWeight: s.done ? 700 : 400 }}>{s.step}</div>
-            </div>
-            {i < arr.length - 1 && <div style={{ position: "absolute", left: 18, marginTop: 36, width: 2, height: 32, background: s.done ? "#10b981" : theme.inputBg }} />}
+            <div style={{ color: s.done ? t.text : t.subText, fontSize: 12, fontWeight: s.done ? 700 : 400, fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: s.done ? "normal" : "italic" }}>{s.step}</div>
           </div>
         ))}
       </div>
@@ -1253,34 +1537,33 @@ const PatLab = ({ setScreen, theme, showToast }: { setScreen: (s: Screen) => voi
   );
 
   return (
-    <div className="flex flex-col h-full" style={{ background: theme.bg }}>
-      <SectionHeader theme={theme} title="Lab Tests" subtitle="Book · Track · Download" onBack={() => setScreen("pat_home")} />
-      <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-3 flex flex-col gap-3">
-        <button onClick={() => setTrackMode(true)} style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 14, padding: "10px 14px", color: "#34d399", fontSize: 12, fontWeight: 600, cursor: "pointer", textAlign: "left" }}>
-          🔍 Track Existing Order: P10-LAB-2025-0891 →
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.bg }}>
+      <SectionHeader title="Lab Tests" subtitle="Book · Track · Download" onBack={() => setScreen("pat_home")} theme={theme} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: 10 }} className="no-scrollbar">
+        <button onClick={() => setTrackMode(true)} style={{ background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 14, padding: "10px 14px", color: "#34d399", fontSize: 12, fontWeight: 600, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 6, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+          <Navigation size={13} /> Track Order: P10-LAB-2025-0891 →
         </button>
-
         <div>
-          <div style={{ color: theme.accent, fontSize: 11, fontWeight: 700, marginBottom: 8 }}>TEST CATALOG</div>
-          {LAB_TESTS.map(t => (
-            <div key={t.name} style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: 14, padding: "12px 14px", marginBottom: 6, display: "flex", alignItems: "center", gap: 10, boxShadow: theme.mode === 'light' ? '0 1px 4px rgba(0,0,0,0.05)' : 'none' }}>
+          <div style={{ color: t.accent, fontSize: 11, fontWeight: 700, marginBottom: 8, fontFamily: "'Playfair Display', Georgia, serif" }}>TEST CATALOG</div>
+          {LAB_TESTS.map(test => (
+            <div key={test.name} style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "12px 14px", marginBottom: 6, display: "flex", alignItems: "center", gap: 10 }}>
+              <FlaskConical size={16} color={t.accent} />
               <div style={{ flex: 1 }}>
-                <div style={{ color: theme.text, fontSize: 11, fontWeight: 600 }}>{t.name}</div>
-                <div style={{ color: theme.textSec, fontSize: 9, marginTop: 2 }}>{t.category} · ⏱ {t.time} · {t.price}</div>
+                <div style={{ color: t.text, fontSize: 11, fontWeight: 600, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{test.name}</div>
+                <div style={{ color: t.subText, fontSize: 9, marginTop: 2, fontFamily: "'Libre Baskerville', Georgia, serif" }}>{test.category} · {test.time} · {test.price}</div>
               </div>
-              <button onClick={() => cart.includes(t.name) ? setCart(c => c.filter(n => n !== t.name)) : setCart(c => [...c, t.name])}
-                style={{ background: cart.includes(t.name) ? "rgba(16,185,129,0.2)" : theme.inputBg, border: `1px solid ${cart.includes(t.name) ? "rgba(16,185,129,0.4)" : "transparent"}`, borderRadius: 10, padding: "6px 10px", color: cart.includes(t.name) ? "#34d399" : theme.accent, fontSize: 10, fontWeight: 600, cursor: "pointer" }}>
-                {cart.includes(t.name) ? "✓ Added" : "+ Add"}
+              <button onClick={() => cart.includes(test.name) ? setCart(c => c.filter(n => n !== test.name)) : setCart(c => [...c, test.name])}
+                style={{ background: cart.includes(test.name) ? "rgba(16,185,129,0.15)" : "rgba(37,99,235,0.15)", border: `1px solid ${cart.includes(test.name) ? "rgba(16,185,129,0.4)" : "rgba(37,99,235,0.3)"}`, borderRadius: 10, padding: "6px 10px", color: cart.includes(test.name) ? "#34d399" : t.accent, fontSize: 10, fontWeight: 600, cursor: "pointer", fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+                {cart.includes(test.name) ? "✓ Added" : "+ Add"}
               </button>
             </div>
           ))}
         </div>
-
         {cart.length > 0 && (
           <div style={{ background: "linear-gradient(135deg,#1a3a6e,#2563eb)", borderRadius: 16, padding: "14px", marginTop: 4 }}>
-            <div style={{ color: "#fff", fontWeight: 700, fontSize: 12, marginBottom: 6 }}>{cart.length} Test(s) Selected</div>
-            <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 10, marginBottom: 10 }}>Home Collection Available · Free Pick-up</div>
-            <button onClick={() => showToast("Proceeding to checkout (Demo)")} style={{ width: "100%", background: "#fff", border: "none", borderRadius: 10, padding: "10px 0", color: "#1d4ed8", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Book Home Collection →</button>
+            <div style={{ color: "#ffffff", fontWeight: 700, fontSize: 12, marginBottom: 4, fontFamily: "'Playfair Display', Georgia, serif" }}>{cart.length} Test(s) Selected</div>
+            <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 10, marginBottom: 10, fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic" }}>Home Collection Available · Free Pick-up</div>
+            <button style={{ width: "100%", background: "#fff", border: "none", borderRadius: 10, padding: "10px 0", color: "#1d4ed8", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'Playfair Display', Georgia, serif" }}>Book Home Collection →</button>
           </div>
         )}
       </div>
@@ -1288,67 +1571,72 @@ const PatLab = ({ setScreen, theme, showToast }: { setScreen: (s: Screen) => voi
   );
 };
 
-const PatPharmacy = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: Theme }) => {
+const PatPharmacy = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: ThemeMode }) => {
   const [cart, setCart] = useState<Record<string, number>>({});
   const [ordered, setOrdered] = useState(false);
+  const t = THEMES[theme];
   const total = Object.entries(cart).reduce((sum, [name, qty]) => {
     const med = MEDICINES.find(m => m.name === name);
     return sum + (med ? parseInt(med.price.replace("₹", "")) * qty : 0);
   }, 0);
 
   if (ordered) return (
-    <div className="flex flex-col items-center justify-center h-full px-6 gap-5" style={{ background: theme.bg }}>
-      <div style={{ fontSize: 60 }}>🛵</div>
-      <div style={{ color: "#34d399", fontWeight: 800, fontSize: 20, textAlign: "center" }}>Order Placed!</div>
-      <div style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 18, padding: "18px", width: "100%", textAlign: "center" }}>
-        <div style={{ color: theme.textSec, fontSize: 10 }}>ORDER ID</div>
-        <div style={{ color: theme.text, fontWeight: 800, fontSize: 18, marginTop: 2 }}>P10-PH-2025-{Math.floor(Math.random() * 9000 + 1000)}</div>
-        <div className="flex justify-around mt-3">
-          {["Placed ✓", "Packed", "Delivery", "Delivered"].map((s, i) => (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", background: t.bg, padding: "0 24px", gap: 16 }}>
+      <div style={{ background: "rgba(37,99,235,0.12)", borderRadius: 32, padding: 24, animation: "scaleIn 0.3s ease-out" }}>
+        <Truck size={56} color="#93c5fd" strokeWidth={1.5} />
+      </div>
+      <div style={{ color: "#34d399", fontWeight: 800, fontSize: 20, textAlign: "center", fontFamily: "'Playfair Display', Georgia, serif" }}>Order Placed!</div>
+      <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 18, padding: "18px", width: "100%", textAlign: "center" }}>
+        <div style={{ color: t.subText, fontSize: 10, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>ORDER ID</div>
+        <div style={{ color: t.text, fontWeight: 800, fontSize: 18, marginTop: 2, fontFamily: "'Playfair Display', Georgia, serif" }}>PH-2025-{Math.floor(Math.random() * 9000 + 1000)}</div>
+        <div style={{ display: "flex", justifyContent: "space-around", marginTop: 12 }}>
+          {["Placed", "Packed", "Delivery", "Delivered"].map((s, i) => (
             <div key={i} style={{ textAlign: "center" }}>
-              <div style={{ width: 10, height: 10, borderRadius: "50%", background: i === 0 ? "#10b981" : theme.inputBg, margin: "0 auto 4px" }} />
-              <div style={{ color: i === 0 ? "#34d399" : theme.textSec, fontSize: 8 }}>{s}</div>
+              <div style={{ width: 10, height: 10, borderRadius: "50%", background: i === 0 ? "#10b981" : t.inputBg, margin: "0 auto 4px" }} />
+              <div style={{ color: i === 0 ? "#34d399" : t.subText, fontSize: 8, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{s}</div>
             </div>
           ))}
         </div>
       </div>
-      <button onClick={() => { setOrdered(false); setCart({}); }} style={{ background: "linear-gradient(135deg,#2563eb,#1d4ed8)", border: "none", borderRadius: 14, padding: "12px 28px", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Continue Shopping</button>
+      <button onClick={() => { setOrdered(false); setCart({}); }} style={{ background: "linear-gradient(135deg,#2563eb,#1d4ed8)", border: "none", borderRadius: 14, padding: "12px 28px", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Playfair Display', Georgia, serif" }}>Continue Shopping</button>
     </div>
   );
 
   return (
-    <div className="flex flex-col h-full" style={{ background: theme.bg }}>
-      <SectionHeader theme={theme} title="Pharmacy" subtitle="Order Medicines · Home Delivery" onBack={() => setScreen("pat_home")} />
-      <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-3 flex flex-col gap-3">
-        <input placeholder="🔍 Search medicines..." style={{ width: "100%", background: theme.inputBg, border: `1px solid ${theme.inputBorder}`, borderRadius: 12, padding: "10px 14px", color: theme.text, fontSize: 12, outline: "none", boxSizing: "border-box" }} />
-
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.bg }}>
+      <SectionHeader title="Pharmacy" subtitle="Order Medicines · Home Delivery" onBack={() => setScreen("pat_home")} theme={theme} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: 8 }} className="no-scrollbar">
+        <div style={{ position: "relative" }}>
+          <Search size={13} color={t.accent} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }} />
+          <input placeholder="Search medicines..." style={{ width: "100%", background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: "10px 14px 10px 30px", color: t.text, fontSize: 12, outline: "none", boxSizing: "border-box", fontFamily: "'Libre Baskerville', Georgia, serif" }} />
+        </div>
         {MEDICINES.map(m => (
-          <div key={m.name} style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: 14, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10, boxShadow: theme.mode === 'light' ? '0 1px 4px rgba(0,0,0,0.05)' : 'none' }}>
+          <div key={m.name} style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
+            <Pill size={16} color={t.accent} />
             <div style={{ flex: 1 }}>
-              <div style={{ color: theme.text, fontSize: 12, fontWeight: 600 }}>{m.name}</div>
-              <div style={{ color: theme.textSec, fontSize: 9 }}>{m.category} · {m.price}/strip</div>
+              <div style={{ color: t.text, fontSize: 12, fontWeight: 600, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{m.name}</div>
+              <div style={{ color: t.subText, fontSize: 9, fontFamily: "'Libre Baskerville', Georgia, serif" }}>{m.category} · {m.price}/strip</div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               {cart[m.name] ? (
                 <>
-                  <button onClick={() => setCart(c => ({ ...c, [m.name]: Math.max(0, (c[m.name] || 0) - 1) }))} style={{ background: "rgba(239,68,68,0.2)", border: "none", borderRadius: 8, width: 26, height: 26, color: "#fca5a5", fontSize: 14, cursor: "pointer" }}>−</button>
-                  <span style={{ color: theme.text, fontSize: 13, fontWeight: 700, minWidth: 16, textAlign: "center" }}>{cart[m.name]}</span>
-                  <button onClick={() => setCart(c => ({ ...c, [m.name]: (c[m.name] || 0) + 1 }))} style={{ background: "rgba(16,185,129,0.2)", border: "none", borderRadius: 8, width: 26, height: 26, color: "#34d399", fontSize: 14, cursor: "pointer" }}>+</button>
+                  <button onClick={() => setCart(c => ({ ...c, [m.name]: Math.max(0, (c[m.name] || 0) - 1) }))} style={{ background: "rgba(239,68,68,0.2)", border: "none", borderRadius: 8, width: 26, height: 26, color: "#fca5a5", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Minus size={12} /></button>
+                  <span style={{ color: t.text, fontSize: 13, fontWeight: 700, minWidth: 16, textAlign: "center", fontFamily: "'Playfair Display', Georgia, serif" }}>{cart[m.name]}</span>
+                  <button onClick={() => setCart(c => ({ ...c, [m.name]: (c[m.name] || 0) + 1 }))} style={{ background: "rgba(16,185,129,0.2)", border: "none", borderRadius: 8, width: 26, height: 26, color: "#34d399", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Plus size={12} /></button>
                 </>
               ) : (
-                <button onClick={() => setCart(c => ({ ...c, [m.name]: 1 }))} style={{ background: theme.inputBg, border: "none", borderRadius: 10, padding: "6px 10px", color: theme.accent, fontSize: 10, fontWeight: 600, cursor: "pointer" }}>+ Add</button>
+                <button onClick={() => setCart(c => ({ ...c, [m.name]: 1 }))} style={{ background: "rgba(37,99,235,0.15)", border: `1px solid rgba(37,99,235,0.3)`, borderRadius: 10, padding: "6px 10px", color: t.accent, fontSize: 10, fontWeight: 600, cursor: "pointer", fontFamily: "'Cormorant Garamond', Georgia, serif" }}>+ Add</button>
               )}
             </div>
           </div>
         ))}
-
         {total > 0 && (
           <div style={{ background: "linear-gradient(135deg,#1a3a6e,#2563eb)", borderRadius: 16, padding: "14px", marginTop: 4 }}>
-            <div className="flex justify-between mb-3">
-              <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 12 }}>{Object.keys(cart).filter(k => cart[k] > 0).length} Items</span>
-              <span style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>₹{total}</span>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+              <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{Object.keys(cart).filter(k => cart[k] > 0).length} Items</span>
+              <span style={{ color: "#ffffff", fontWeight: 700, fontSize: 14, fontFamily: "'Playfair Display', Georgia, serif" }}>₹{total}</span>
             </div>
-            <button onClick={() => setOrdered(true)} style={{ width: "100%", background: "#fff", border: "none", borderRadius: 10, padding: "11px 0", color: "#1d4ed8", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+            <button onClick={() => setOrdered(true)} style={{ width: "100%", background: "#fff", border: "none", borderRadius: 10, padding: "11px 0", color: "#1d4ed8", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Playfair Display', Georgia, serif" }}>
               Place Order · ₹{total} →
             </button>
           </div>
@@ -1359,56 +1647,57 @@ const PatPharmacy = ({ setScreen, theme }: { setScreen: (s: Screen) => void; the
   );
 };
 
-const PatSOS = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: Theme }) => {
+const PatSOS = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: ThemeMode }) => {
   const [triggered, setTriggered] = useState(false);
-
+  const t = THEMES[theme];
   return (
-    <div className="flex flex-col h-full" style={{ background: theme.bg }}>
-      <SectionHeader theme={theme} title="Emergency SOS" subtitle="24/7 Emergency Services" onBack={() => setScreen("pat_home")} />
-      <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 flex flex-col gap-4 items-center">
-        {/* SOS Button */}
-        <div className="flex flex-col items-center gap-4 pt-4">
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.bg }}>
+      <SectionHeader title="Emergency SOS" subtitle="24/7 Emergency Services" onBack={() => setScreen("pat_home")} theme={theme} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "14px", display: "flex", flexDirection: "column", gap: 14, alignItems: "center" }} className="no-scrollbar">
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, paddingTop: 16 }}>
           <button onClick={() => setTriggered(!triggered)}
-            style={{ width: 130, height: 130, borderRadius: "50%", background: triggered ? "linear-gradient(135deg,#16a34a,#22c55e)" : "linear-gradient(135deg,#dc2626,#ef4444)", border: `4px solid ${triggered ? "#22c55e" : "#ef4444"}`, fontSize: 40, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", boxShadow: `0 0 40px ${triggered ? "rgba(34,197,94,0.5)" : "rgba(220,38,38,0.6)"}`, animation: "pulse-glow 1.5s infinite", gap: 4 }}>
-            <span>{triggered ? "✓" : "🚑"}</span>
-            <span style={{ color: "#fff", fontSize: 11, fontWeight: 800 }}>{triggered ? "CALLED" : "SOS"}</span>
+            style={{ width: 130, height: 130, borderRadius: "50%", background: triggered ? "linear-gradient(135deg,#16a34a,#22c55e)" : "linear-gradient(135deg,#dc2626,#ef4444)", border: `4px solid ${triggered ? "#22c55e" : "#ef4444"}`, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", boxShadow: `0 0 40px ${triggered ? "rgba(34,197,94,0.5)" : "rgba(220,38,38,0.6)"}`, gap: 4, animation: triggered ? "none" : "pulse-ring 2s infinite" }}>
+            {triggered ? <CheckCircle size={40} color="#fff" strokeWidth={2} /> : <Ambulance size={40} color="#fff" strokeWidth={1.5} />}
+            <span style={{ color: "#fff", fontSize: 11, fontWeight: 800, fontFamily: "'Playfair Display', Georgia, serif" }}>{triggered ? "CALLED" : "SOS"}</span>
           </button>
-          <div style={{ color: triggered ? "#34d399" : "#fca5a5", fontSize: 13, fontWeight: 700, textAlign: "center" }}>
+          <div style={{ color: triggered ? "#34d399" : "#fca5a5", fontSize: 13, fontWeight: 700, textAlign: "center", fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic" }}>
             {triggered ? "✓ Ambulance Dispatched · ETA 8 min" : "Tap for Emergency Ambulance"}
           </div>
         </div>
 
         {triggered && (
-          <div style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 16, padding: "14px", width: "100%" }}>
-            <div style={{ color: "#34d399", fontSize: 11, fontWeight: 700, marginBottom: 6 }}>🚑 AMBULANCE EN ROUTE</div>
-            <div style={{ color: theme.text, fontSize: 12 }}>Vehicle: KA-01-AM-4521</div>
-            <div style={{ color: theme.textSec, fontSize: 10, marginTop: 2 }}>Driver: Suresh · +91 98001 23456</div>
-            <div style={{ background: theme.inputBg, borderRadius: 12, padding: "12px", marginTop: 10, textAlign: "center" }}>
-              <div style={{ color: theme.textSec, fontSize: 9 }}>MAP PLACEHOLDER</div>
-              <div style={{ color: theme.textSec, fontSize: 40 }}>🗺️</div>
-              <div style={{ color: theme.textSec, fontSize: 9 }}>Real-time tracking active</div>
+          <div style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 16, padding: "14px", width: "100%", animation: "scaleIn 0.3s ease-out" }}>
+            <div style={{ color: "#34d399", fontSize: 11, fontWeight: 700, marginBottom: 6, display: "flex", alignItems: "center", gap: 5, fontFamily: "'Playfair Display', Georgia, serif" }}>
+              <Ambulance size={13} /> AMBULANCE EN ROUTE
+            </div>
+            <div style={{ color: t.text, fontSize: 12, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Vehicle: KA-01-AM-4521</div>
+            <div style={{ color: t.subText, fontSize: 10, marginTop: 2, fontFamily: "'Libre Baskerville', Georgia, serif" }}>Driver: Suresh · +91 98001 23456</div>
+            <div style={{ background: t.inputBg, borderRadius: 12, padding: "16px", marginTop: 8, textAlign: "center" }}>
+              <Navigation size={32} color={t.subText} style={{ opacity: 0.4, margin: "0 auto" }} />
+              <div style={{ color: t.subText, fontSize: 9, marginTop: 6, fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic" }}>Real-time tracking active</div>
             </div>
           </div>
         )}
 
-        {/* Emergency Contacts */}
         <div style={{ width: "100%" }}>
-          <div style={{ color: theme.accent, fontSize: 11, fontWeight: 700, marginBottom: 8 }}>QUICK EMERGENCY CALLS</div>
+          <div style={{ color: t.accent, fontSize: 11, fontWeight: 700, marginBottom: 8, fontFamily: "'Playfair Display', Georgia, serif" }}>QUICK EMERGENCY CALLS</div>
           {[
-            { label: "Project 10 ER", num: "080-1234-5678", icon: "🏥" },
-            { label: "National Ambulance", num: "108", icon: "🚑" },
-            { label: "Emergency (Police)", num: "100", icon: "🚔" },
-            { label: "Personal: Meera (Wife)", num: "+91 98765 11111", icon: "👩" },
+            { label: "Project 10 Hospital ER", num: "080-1234-5678", Icon: Building2 },
+            { label: "National Ambulance",      num: "108",           Icon: Ambulance },
+            { label: "Emergency (Police)",      num: "100",           Icon: Shield },
+            { label: "Personal: Meera (Wife)", num: "+91 98765 11111", Icon: PhoneCall },
           ].map(c => (
-            <div key={c.label} style={{ background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.2)", borderRadius: 12, padding: "10px 14px", marginBottom: 6, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div key={c.label} style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.2)", borderRadius: 12, padding: "10px 14px", marginBottom: 6, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                <span style={{ fontSize: 18 }}>{c.icon}</span>
+                <c.Icon size={16} color="#fca5a5" />
                 <div>
-                  <div style={{ color: theme.text, fontSize: 11, fontWeight: 600 }}>{c.label}</div>
-                  <div style={{ color: "#fca5a5", fontSize: 10 }}>{c.num}</div>
+                  <div style={{ color: t.text, fontSize: 11, fontWeight: 600, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{c.label}</div>
+                  <div style={{ color: "#fca5a5", fontSize: 10, fontFamily: "'Libre Baskerville', Georgia, serif" }}>{c.num}</div>
                 </div>
               </div>
-              <button style={{ background: "rgba(239,68,68,0.3)", border: "none", borderRadius: 10, padding: "7px 12px", color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>📞</button>
+              <button style={{ background: "rgba(239,68,68,0.3)", border: "none", borderRadius: 10, padding: "7px 12px", color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center" }}>
+                <Phone size={12} color="#fff" />
+              </button>
             </div>
           ))}
         </div>
@@ -1417,358 +1706,416 @@ const PatSOS = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: T
   );
 };
 
-const PatVideo = ({ setScreen, theme, showToast }: { setScreen: (s: Screen) => void; theme: Theme; showToast: (msg: string) => void }) => {
+const PatVideo = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: ThemeMode }) => {
   const [inCall, setInCall] = useState(false);
+  const t = THEMES[theme];
   if (inCall) return (
     <div style={{ background: "#000", height: "100%", display: "flex", flexDirection: "column" }}>
       <div style={{ flex: 1, background: "linear-gradient(135deg,#0a1628,#0c4a6e)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
-        <div style={{ fontSize: 56 }}>👨‍⚕️</div>
-        <div style={{ color: "#fff", fontWeight: 700, fontSize: 16 }}>Dr. Arjun Mehta</div>
-        <div style={{ color: "#34d399", fontSize: 11 }}>● Connected · 00:02:18</div>
-        <div style={{ color: "rgba(147,197,253,0.6)", fontSize: 10, marginTop: 6, textAlign: "center", padding: "0 20px" }}>Cardiology · Project 10</div>
+        <div style={{ background: "linear-gradient(135deg,#1a3a6e,#2563eb)", borderRadius: "50%", padding: 18, boxShadow: "0 0 30px rgba(37,99,235,0.5)" }}>
+          <Stethoscope size={48} color="#fff" strokeWidth={1.5} />
+        </div>
+        <div style={{ color: "#fff", fontWeight: 700, fontSize: 16, fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic" }}>Dr. Arjun Mehta</div>
+        <div style={{ color: "#34d399", fontSize: 11, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>● Connected · 00:02:18</div>
       </div>
-      <div style={{ background: "rgba(0,0,0,0.8)", padding: "16px 24px 20px", display: "flex", justifyContent: "space-around", alignItems: "center" }}>
-        {["🎤", "📹", "📞", "💬"].map((icon, i) => (
-          <button key={i} onClick={() => { if (i === 2) setInCall(false); }} style={{ background: i === 2 ? "#ef4444" : "#374151", border: "none", borderRadius: "50%", width: i === 2 ? 56 : 44, height: i === 2 ? 56 : 44, fontSize: i === 2 ? 22 : 18, cursor: "pointer" }}>{icon}</button>
+      <div style={{ background: "rgba(0,0,0,0.85)", padding: "16px 24px 20px", display: "flex", justifyContent: "space-around", alignItems: "center" }}>
+        {[{ Icon: Mic, color: "#374151" }, { Icon: Video, color: "#374151" }, { Icon: Phone, color: "#ef4444", big: true }, { Icon: MessageSquare, color: "#374151" }].map((ctrl, i) => (
+          <button key={i} onClick={() => { if (i === 2) setInCall(false); }} style={{ background: ctrl.color, border: "none", borderRadius: "50%", width: (ctrl as any).big ? 56 : 44, height: (ctrl as any).big ? 56 : 44, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <ctrl.Icon size={(ctrl as any).big ? 22 : 18} color="#fff" />
+          </button>
         ))}
       </div>
     </div>
   );
 
   return (
-    <div className="flex flex-col h-full" style={{ background: theme.bg }}>
-      <SectionHeader theme={theme} title="Video Consultation" subtitle="Teleconsult · Project 10" onBack={() => setScreen("pat_home")} />
-      <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-3 flex flex-col gap-3">
-        <div style={{ background: "rgba(37,99,235,0.15)", border: "1px solid rgba(37,99,235,0.3)", borderRadius: 16, padding: "16px" }}>
-          <div style={{ color: theme.textSec, fontSize: 10, fontWeight: 700, marginBottom: 8 }}>SCHEDULED SESSION</div>
-          <div className="flex items-center gap-3 mb-3">
-            <div style={{ fontSize: 36 }}>👨‍⚕️</div>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.bg }}>
+      <SectionHeader title="Video Consultation" subtitle="Teleconsult · Project 10 Hospital" onBack={() => setScreen("pat_home")} theme={theme} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: 10 }} className="no-scrollbar">
+        <div style={{ background: "rgba(37,99,235,0.12)", border: "1px solid rgba(37,99,235,0.25)", borderRadius: 16, padding: "16px" }}>
+          <div style={{ color: t.accent, fontSize: 10, fontWeight: 700, marginBottom: 8, letterSpacing: 1, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>SCHEDULED SESSION</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+            <div style={{ background: "linear-gradient(135deg,#1a3a6e,#2563eb)", borderRadius: 14, padding: 10 }}>
+              <Stethoscope size={28} color="#fff" strokeWidth={1.5} />
+            </div>
             <div>
-              <div style={{ color: theme.text, fontWeight: 700, fontSize: 14 }}>Dr. Arjun Mehta</div>
-              <div style={{ color: theme.textSec, fontSize: 10 }}>Cardiology · VC-2025-4521</div>
-              <div style={{ color: "#fbbf24", fontSize: 10 }}>Today · 5:00 PM · 15 mins</div>
+              <div style={{ color: t.text, fontWeight: 700, fontSize: 14, fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic" }}>Dr. Arjun Mehta</div>
+              <div style={{ color: t.subText, fontSize: 10, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Cardiology · VC-2025-4521</div>
+              <div style={{ color: "#fbbf24", fontSize: 10, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Today · 5:00 PM · 15 mins</div>
             </div>
           </div>
-          <button onClick={() => setInCall(true)} style={{ width: "100%", background: "linear-gradient(135deg,#2563eb,#1d4ed8)", border: "none", borderRadius: 12, padding: "12px 0", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-            📹 Join Video Call Now
+          <button onClick={() => setInCall(true)} style={{ width: "100%", background: "linear-gradient(135deg,#2563eb,#1d4ed8)", border: "none", borderRadius: 12, padding: "12px 0", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontFamily: "'Playfair Display', Georgia, serif" }}>
+            <Video size={14} /> Join Video Call Now
           </button>
         </div>
-
-        {/* Post-call prescription */}
-        <div style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 16, padding: "14px" }}>
-          <div style={{ color: "#34d399", fontSize: 10, fontWeight: 700, marginBottom: 6 }}>LAST CONSULTATION — Rx</div>
-          <div style={{ color: theme.text, fontSize: 11, fontWeight: 600 }}>Dr. Arjun Mehta · 15 Jan 2025</div>
-          <div style={{ color: theme.textSec, fontSize: 10, marginTop: 4 }}>Amlodipine 5mg · 1-0-1 · 30D<br />Pantoprazole 40mg · 0-0-1 · 30D</div>
-          <button onClick={() => showToast("Downloading Prescription PDF...")} style={{ background: "rgba(16,185,129,0.2)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 10, padding: "7px 14px", color: "#34d399", fontSize: 10, fontWeight: 600, cursor: "pointer", marginTop: 8 }}>⬇ Download Rx PDF</button>
+        <div style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 16, padding: "14px" }}>
+          <div style={{ color: "#34d399", fontSize: 10, fontWeight: 700, marginBottom: 6, letterSpacing: 1, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>LAST CONSULTATION — Rx</div>
+          <div style={{ color: t.text, fontSize: 11, fontWeight: 600, fontFamily: "'Playfair Display', Georgia, serif" }}>Dr. Arjun Mehta · 15 Jan 2025</div>
+          <div style={{ color: t.subText, fontSize: 10, marginTop: 4, fontFamily: "'Libre Baskerville', Georgia, serif", fontStyle: "italic" }}>Amlodipine 5mg · 1-0-1 · 30D<br />Pantoprazole 40mg · 0-0-1 · 30D</div>
+          <button style={{ background: "rgba(16,185,129,0.2)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 10, padding: "7px 14px", color: "#34d399", fontSize: 10, fontWeight: 600, cursor: "pointer", marginTop: 8, display: "flex", alignItems: "center", gap: 5, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+            <FileText size={11} /> Download Rx PDF
+          </button>
         </div>
       </div>
     </div>
   );
 };
 
-const PatVitals = ({ setScreen, theme, showToast }: { setScreen: (s: Screen) => void; theme: Theme; showToast: (msg: string) => void }) => (
-  <div className="flex flex-col h-full" style={{ background: theme.bg }}>
-    <SectionHeader theme={theme} title="Health Vitals Tracker" subtitle="Log · Monitor · Analyze" onBack={() => setScreen("pat_home")} />
-    <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-3 flex flex-col gap-4">
-      {/* Log Today */}
-      <div style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: 16, padding: "14px", boxShadow: theme.mode === 'light' ? '0 1px 4px rgba(0,0,0,0.05)' : 'none' }}>
-        <div style={{ color: theme.accent, fontSize: 11, fontWeight: 700, marginBottom: 10 }}>LOG TODAY'S READINGS</div>
-        <div className="grid grid-cols-2 gap-3">
-          {["BP (Systolic)", "BP (Diastolic)", "Blood Sugar (F)", "Blood Sugar (PP)", "SpO₂ (%)", "Weight (kg)"].map(v => (
-            <div key={v}>
-              <label style={{ color: theme.textSec, fontSize: 9, display: "block", marginBottom: 3 }}>{v}</label>
-              <input type="number" style={{ width: "100%", background: theme.inputBg, border: `1px solid ${theme.inputBorder}`, borderRadius: 10, padding: "8px 10px", color: theme.text, fontSize: 13, fontWeight: 600, outline: "none", boxSizing: "border-box" }} />
+const PatVitals = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: ThemeMode }) => {
+  const t = THEMES[theme];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.bg }}>
+      <SectionHeader title="Health Vitals Tracker" subtitle="Log · Monitor · Analyze" onBack={() => setScreen("pat_home")} theme={theme} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: 12 }} className="no-scrollbar">
+        <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 16, padding: "14px" }}>
+          <div style={{ color: t.accent, fontSize: 11, fontWeight: 700, marginBottom: 10, fontFamily: "'Playfair Display', Georgia, serif" }}>WEEKLY BP TREND</div>
+          <ResponsiveContainer width="100%" height={120}>
+            <LineChart data={BP_DATA} margin={{ top: 0, right: 0, bottom: 0, left: -20 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={t.border} />
+              <XAxis dataKey="day" tick={{ fill: t.accent, fontSize: 9, fontFamily: "'Cormorant Garamond', Georgia, serif" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: t.accent, fontSize: 9 }} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={{ background: t.bg, border: `1px solid ${t.border}`, borderRadius: 10, color: t.text, fontSize: 11 }} />
+              <Line type="monotone" dataKey="systolic" stroke="#ef4444" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="diastolic" stroke="#93c5fd" strokeWidth={2} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+          <div style={{ display: "flex", gap: 12, marginTop: 4 }}>
+            <span style={{ color: "#ef4444", fontSize: 9, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>— Systolic</span>
+            <span style={{ color: "#93c5fd", fontSize: 9, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>— Diastolic</span>
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
+          {[
+            { label: "BP", value: "138/88", Icon: Activity, color: "#ef4444", change: "+2" },
+            { label: "Pulse", value: "76 bpm", Icon: Heart, color: "#f43f5e", change: "–" },
+            { label: "SpO₂", value: "97%", Icon: Droplets, color: "#0ea5e9", change: "–" },
+            { label: "Weight", value: "82 kg", Icon: Weight, color: "#10b981", change: "+0.5" },
+            { label: "Temp", value: "98.6°F", Icon: Thermometer, color: "#f59e0b", change: "–" },
+            { label: "RBS", value: "210 mg/dL", Icon: FlaskConical, color: "#8b5cf6", change: "+12" },
+          ].map(v => (
+            <div key={v.label} style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "12px 14px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 5 }}>
+                <v.Icon size={13} color={v.color} />
+                <span style={{ color: t.subText, fontSize: 9, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{v.label}</span>
+              </div>
+              <div style={{ color: t.text, fontWeight: 700, fontSize: 14, fontFamily: "'Playfair Display', Georgia, serif" }}>{v.value}</div>
+              <div style={{ color: v.change !== "–" ? "#fbbf24" : t.subText, fontSize: 8.5, marginTop: 2, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{v.change !== "–" ? `${v.change} vs yesterday` : "Stable"}</div>
             </div>
           ))}
         </div>
-        <button onClick={() => showToast("Vitals saved successfully!")} style={{ width: "100%", background: "linear-gradient(135deg,#2563eb,#1d4ed8)", border: "none", borderRadius: 12, padding: "11px 0", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", marginTop: 12 }}>💾 Save Today's Readings</button>
-      </div>
 
-      {/* BP Chart */}
-      <div style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: 16, padding: "14px", boxShadow: theme.mode === 'light' ? '0 1px 4px rgba(0,0,0,0.05)' : 'none' }}>
-        <div style={{ color: theme.accent, fontSize: 11, fontWeight: 700, marginBottom: 10 }}>BLOOD PRESSURE TREND</div>
-        <ResponsiveContainer width="100%" height={120}>
-          <LineChart data={BP_DATA} margin={{ top: 0, right: 0, bottom: 0, left: -24 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={theme.cardBorder} />
-            <XAxis dataKey="day" tick={{ fill: theme.textSec, fontSize: 8 }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fill: theme.textSec, fontSize: 8 }} axisLine={false} tickLine={false} />
-            <Tooltip contentStyle={{ background: theme.bg, border: `1px solid ${theme.cardBorder}`, borderRadius: 8, color: theme.text, fontSize: 10 }} />
-            <Line type="monotone" dataKey="systolic" stroke="#ef4444" strokeWidth={2} dot={{ fill: "#ef4444", r: 3 }} name="Systolic" />
-            <Line type="monotone" dataKey="diastolic" stroke="#2563eb" strokeWidth={2} dot={{ fill: "#2563eb", r: 3 }} name="Diastolic" />
-          </LineChart>
-        </ResponsiveContainer>
+        <button style={{ background: "linear-gradient(135deg,#2563eb,#1d4ed8)", border: "none", borderRadius: 14, padding: "14px", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontFamily: "'Playfair Display', Georgia, serif" }}>
+          <Plus size={16} /> Log Today's Vitals
+        </button>
       </div>
+    </div>
+  );
+};
 
-      {/* Reminders */}
-      <div>
-        <div style={{ color: theme.accent, fontSize: 11, fontWeight: 700, marginBottom: 8 }}>MEDICATION REMINDERS</div>
-        {[{ med: "Amlodipine 5mg", time: "8:00 AM · Daily" }, { med: "Metformin 500mg", time: "After Lunch & Dinner" }].map((r, i) => (
-          <div key={i} style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: 12, padding: "10px 14px", marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: theme.mode === 'light' ? '0 1px 4px rgba(0,0,0,0.05)' : 'none' }}>
-            <div>
-              <div style={{ color: theme.text, fontSize: 11, fontWeight: 600 }}>💊 {r.med}</div>
-              <div style={{ color: theme.textSec, fontSize: 9 }}>⏰ {r.time}</div>
+const PatBilling = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: ThemeMode }) => {
+  const t = THEMES[theme];
+  const bills = [
+    { desc: "OPD Consultation — Dr. Arjun Mehta", amount: "₹800", date: "15 Feb 2025", status: "Paid" },
+    { desc: "CBC + LFT Lab Tests",                amount: "₹1,000", date: "14 Feb 2025", status: "Paid" },
+    { desc: "Medicines — Metformin, Amlodipine",  amount: "₹340", date: "13 Feb 2025", status: "Pending" },
+    { desc: "ECG + Echo",                         amount: "₹2,200", date: "10 Jan 2025", status: "Paid" },
+  ];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.bg }}>
+      <SectionHeader title="Billing & Payments" subtitle="Transaction History" onBack={() => setScreen("pat_home")} theme={theme} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: 10 }} className="no-scrollbar">
+        <div style={{ background: "linear-gradient(135deg,#1a3a6e,#2563eb)", borderRadius: 16, padding: "16px", textAlign: "center" }}>
+          <div style={{ color: "rgba(255,255,255,0.65)", fontSize: 10, fontFamily: "'Cormorant Garamond', Georgia, serif", letterSpacing: 1 }}>TOTAL SPEND — Feb 2025</div>
+          <div style={{ color: "#ffffff", fontWeight: 900, fontSize: 28, fontFamily: "'Playfair Display', Georgia, serif" }}>₹4,340</div>
+          <div style={{ color: "rgba(255,255,255,0.65)", fontSize: 10, fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic" }}>4 transactions</div>
+        </div>
+        {bills.map((b, i) => (
+          <div key={i} style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", animation: `fadeInUp ${0.1 + i * 0.06}s ease-out` }}>
+            <div style={{ flex: 1, marginRight: 10 }}>
+              <div style={{ color: t.text, fontSize: 11, fontWeight: 600, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{b.desc}</div>
+              <div style={{ color: t.subText, fontSize: 9, marginTop: 2, display: "flex", alignItems: "center", gap: 3, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+                <Calendar size={9} />{b.date}
+              </div>
             </div>
-            <button onClick={() => showToast(`Edit reminder: ${r.med}`)} style={{ background: "rgba(37,99,235,0.2)", border: "none", borderRadius: 10, padding: "5px 10px", color: theme.accent, fontSize: 9, fontWeight: 600, cursor: "pointer" }}>Edit</button>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ color: t.text, fontWeight: 700, fontSize: 13, fontFamily: "'Playfair Display', Georgia, serif" }}>{b.amount}</div>
+              <span style={{ background: b.status === "Paid" ? "rgba(16,185,129,0.15)" : "rgba(245,158,11,0.15)", color: b.status === "Paid" ? "#34d399" : "#fbbf24", fontSize: 9, padding: "2px 7px", borderRadius: 8, fontWeight: 600, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{b.status}</span>
+            </div>
           </div>
         ))}
-        <button onClick={() => showToast("Opening reminder form...")} style={{ width: "100%", background: theme.inputBg, border: "1px dashed rgba(147,197,253,0.2)", borderRadius: 12, padding: "10px 0", color: theme.accent, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>+ Add Reminder</button>
-      </div>
-    </div>
-  </div>
-);
-
-const PatBilling = ({ setScreen, theme, showToast }: { setScreen: (s: Screen) => void; theme: Theme; showToast: (msg: string) => void }) => {
-  const [paid, setPaid] = useState<string[]>([]);
-
-  return (
-    <div className="flex flex-col h-full" style={{ background: theme.bg }}>
-      <SectionHeader theme={theme} title="Billing & Payments" subtitle="Outstanding · History · Insurance" onBack={() => setScreen("pat_home")} />
-      <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-3 flex flex-col gap-4">
-        {/* Outstanding */}
-        <div>
-          <div style={{ color: theme.accent, fontSize: 11, fontWeight: 700, marginBottom: 8 }}>OUTSTANDING BILLS</div>
-          {[
-            { id: "P10-BILL-2025-0421", desc: "OPD Consultation — Dr. Arjun Mehta", amount: "₹800", date: "15 Jan 2025" },
-            { id: "P10-BILL-2025-0389", desc: "Lab Tests — CBC, LFT, KFT", amount: "₹1,550", date: "10 Feb 2025" },
-          ].map(b => (
-            <div key={b.id} style={{ background: paid.includes(b.id) ? "rgba(16,185,129,0.1)" : "rgba(245,158,11,0.1)", border: `1px solid ${paid.includes(b.id) ? "rgba(16,185,129,0.3)" : "rgba(245,158,11,0.3)"}`, borderRadius: 14, padding: "12px 14px", marginBottom: 6 }}>
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <div style={{ color: theme.text, fontSize: 11, fontWeight: 600 }}>{b.desc}</div>
-                  <div style={{ color: theme.textSec, fontSize: 9 }}>{b.id} · {b.date}</div>
-                </div>
-                <span style={{ color: paid.includes(b.id) ? "#34d399" : "#fbbf24", fontWeight: 800, fontSize: 14 }}>{b.amount}</span>
-              </div>
-              {!paid.includes(b.id) && (
-                <div className="flex gap-2">
-                  {["UPI", "Card", "Net Banking"].map(m => (
-                    <button key={m} onClick={() => setPaid(p => [...p, b.id])}
-                      style={{ flex: 1, background: "rgba(37,99,235,0.2)", border: "1px solid rgba(37,99,235,0.3)", borderRadius: 10, padding: "7px 0", color: "#93c5fd", fontSize: 9, fontWeight: 600, cursor: "pointer" }}>{m}</button>
-                  ))}
-                </div>
-              )}
-              {paid.includes(b.id) && <div style={{ color: "#34d399", fontSize: 10, fontWeight: 600 }}>✓ Payment Successful</div>}
-            </div>
-          ))}
-        </div>
-
-        {/* Insurance */}
-        <div style={{ background: "linear-gradient(135deg,#1a3a6e,#2563eb)", borderRadius: 16, padding: "16px" }}>
-          <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 10, marginBottom: 2 }}>🛡️ INSURANCE</div>
-          <div style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>Star Health Plus</div>
-          <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 11, marginTop: 4 }}>Policy: P10-2024-78923 · ₹5 Lakh Coverage</div>
-          <div style={{ color: "#93c5fd", fontSize: 10, marginTop: 2 }}>Valid: March 2026 · Cashless: ✓</div>
-        </div>
-
-        {/* Payment History */}
-        <div>
-          <div style={{ color: theme.accent, fontSize: 11, fontWeight: 700, marginBottom: 8 }}>PAYMENT HISTORY</div>
-          {[
-            { desc: "OPD — Dr. Mehta", amount: "₹800", date: "15 Jan", mode: "UPI" },
-            { desc: "Pharmacy Order", amount: "₹340", date: "08 Jan", mode: "Card" },
-            { desc: "Lab Tests", amount: "₹650", date: "01 Jan", mode: "NetBanking" },
-          ].map((p, i) => (
-            <div key={i} style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: 12, padding: "10px 14px", marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: theme.mode === 'light' ? '0 1px 4px rgba(0,0,0,0.05)' : 'none' }}>
-              <div>
-                <div style={{ color: theme.text, fontSize: 11 }}>{p.desc}</div>
-                <div style={{ color: theme.textSec, fontSize: 9 }}>{p.date} · {p.mode}</div>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-                <span style={{ color: "#34d399", fontWeight: 700, fontSize: 12 }}>{p.amount}</span>
-                <button onClick={() => showToast("Receipt downloaded")} style={{ background: "transparent", border: "none", color: theme.accent, fontSize: 9, cursor: "pointer" }}>Receipt</button>
-              </div>
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   );
 };
 
-const PatNotifications = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: Theme }) => (
-  <div className="flex flex-col h-full" style={{ background: theme.bg }}>
-    <SectionHeader theme={theme} title="Notifications" subtitle="Reminders & Alerts" onBack={() => setScreen("pat_home")} />
-    <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-3 flex flex-col gap-3">
-      {PAT_NOTIFICATIONS.map((n, i) => (
-        <div key={i} style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: 14, padding: "12px 14px", display: "flex", gap: 10, boxShadow: theme.mode === 'light' ? '0 1px 4px rgba(0,0,0,0.05)' : 'none' }}>
-          <div style={{ fontSize: 20, flexShrink: 0 }}>{n.type === "reminder" ? "📅" : n.type === "report" ? "🧪" : n.type === "medicine" ? "💊" : "🏥"}</div>
-          <div>
-            <div style={{ color: theme.text, fontWeight: 700, fontSize: 12 }}>{n.title}</div>
-            <div style={{ color: theme.textSec, fontSize: 10, marginTop: 2 }}>{n.msg}</div>
-            <div style={{ color: theme.textSec, fontSize: 9, marginTop: 4 }}>{n.time}</div>
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-const PatFamily = ({ setScreen, theme, showToast }: { setScreen: (s: Screen) => void; theme: Theme; showToast: (msg: string) => void }) => (
-  <div className="flex flex-col h-full" style={{ background: theme.bg }}>
-    <SectionHeader theme={theme} title="Family Members" subtitle="Manage Dependents" onBack={() => setScreen("pat_home")} />
-    <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-3 flex flex-col gap-3">
-      {FAMILY_MEMBERS.map(f => (
-        <div key={f.uhid} style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: 16, padding: "14px", boxShadow: theme.mode === 'light' ? '0 1px 4px rgba(0,0,0,0.05)' : 'none' }}>
-          <div className="flex items-center gap-3 mb-3">
-            <div style={{ width: 44, height: 44, background: "linear-gradient(135deg,#0c4a6e,#0ea5e9)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>👤</div>
-            <div>
-              <div style={{ color: theme.text, fontWeight: 700, fontSize: 13 }}>{f.name}</div>
-              <div style={{ color: theme.textSec, fontSize: 10 }}>{f.relation} · {f.age} yrs · {f.blood}</div>
-              <div style={{ color: theme.textSec, fontSize: 9 }}>UHID: {f.uhid}</div>
+const PatNotifications = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: ThemeMode }) => {
+  const t = THEMES[theme];
+  const icons: Record<string, React.ElementType> = { reminder: Calendar, report: FlaskConical, medicine: Pill, hospital: Building2 };
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.bg }}>
+      <SectionHeader title="Notifications" subtitle="4 New" onBack={() => setScreen("pat_home")} theme={theme} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: 10 }} className="no-scrollbar">
+        {PAT_NOTIFICATIONS.map((n, i) => {
+          const Icon = icons[n.type] || Bell;
+          return (
+            <div key={i} style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "12px 14px", display: "flex", gap: 10, animation: `fadeInUp ${0.1 + i * 0.06}s ease-out` }}>
+              <div style={{ background: "rgba(37,99,235,0.12)", borderRadius: 10, padding: 6, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Icon size={16} color={t.accent} />
+              </div>
+              <div>
+                <div style={{ color: t.text, fontWeight: 700, fontSize: 12, fontFamily: "'Playfair Display', Georgia, serif" }}>{n.title}</div>
+                <div style={{ color: t.subText, fontSize: 10, marginTop: 2, fontFamily: "'Libre Baskerville', Georgia, serif", fontStyle: "italic" }}>{n.msg}</div>
+                <div style={{ color: t.subText, fontSize: 9, marginTop: 4, opacity: 0.6, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{n.time}</div>
+              </div>
             </div>
-          </div>
-          <div className="flex gap-2">
-            <button onClick={() => setScreen("pat_find_doctor")} style={{ flex: 1, background: "rgba(37,99,235,0.2)", border: "1px solid rgba(37,99,235,0.3)", borderRadius: 10, padding: "8px 0", color: "#93c5fd", fontSize: 10, fontWeight: 600, cursor: "pointer" }}>🏥 Book Appt</button>
-            <button onClick={() => showToast(`Accessing records for ${f.name}`)} style={{ flex: 1, background: "rgba(124,58,237,0.2)", border: "1px solid rgba(124,58,237,0.3)", borderRadius: 10, padding: "8px 0", color: "#a78bfa", fontSize: 10, fontWeight: 600, cursor: "pointer" }}>📋 Records</button>
-          </div>
-        </div>
-      ))}
-      <button onClick={() => showToast("Opening Add Family Member form")} style={{ background: theme.inputBg, border: "2px dashed rgba(147,197,253,0.2)", borderRadius: 16, padding: "14px 0", color: theme.accent, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>+ Add Family Member</button>
-    </div>
-  </div>
-);
-
-const PatProfile = ({ setScreen, setRole, setCurrentScreen, theme, toggleTheme, showToast }: { setScreen: (s: Screen) => void; setRole: (r: Role) => void; setCurrentScreen: (s: Screen) => void; theme: Theme; toggleTheme: () => void; showToast: (msg: string) => void }) => (
-  <div className="flex flex-col h-full" style={{ background: theme.bg }}>
-    <SectionHeader theme={theme} title="My Profile" subtitle="Project 10 Patient Portal" onBack={() => setScreen("pat_home")} />
-    <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 flex flex-col gap-4">
-      <div style={{ background: "linear-gradient(135deg,#0c4a6e,#0ea5e9)", borderRadius: 20, padding: "20px", textAlign: "center" }}>
-        <div style={{ width: 72, height: 72, background: "rgba(255,255,255,0.15)", borderRadius: 24, margin: "0 auto 12px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, border: "3px solid rgba(255,255,255,0.3)" }}>👤</div>
-        <div style={{ color: "#fff", fontWeight: 800, fontSize: 18 }}>Rajesh Sharma</div>
-        <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 10, marginTop: 2 }}>UHID: P10-P-2024-5891</div>
-        <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 8 }}>
-          <span style={{ background: "rgba(255,255,255,0.15)", borderRadius: 8, padding: "3px 10px", color: "#fff", fontSize: 9 }}>B+ Blood</span>
-          <span style={{ background: "rgba(239,68,68,0.3)", borderRadius: 8, padding: "3px 10px", color: "#fff", fontSize: 9 }}>Hypertension</span>
-          <span style={{ background: "rgba(245,158,11,0.3)", borderRadius: 8, padding: "3px 10px", color: "#fff", fontSize: 9 }}>Diabetic</span>
-        </div>
+          );
+        })}
       </div>
-
-      {[
-        { icon: "👤", label: "Personal Info", sub: "Rajesh Sharma · Male · 52 yrs", action: () => showToast("Opening Profile Editor...") },
-        { icon: "🩸", label: "Blood Group & Allergies", sub: "B+ · Penicillin allergy", action: () => showToast("Opening Medical Details...") },
-        { icon: "📋", label: "Chronic Conditions", sub: "Hypertension, Type 2 DM", action: () => showToast("Opening Conditions Manager...") },
-        { icon: "🆘", label: "Emergency Contact", sub: "Meera Sharma · +91 98765 11111", action: () => showToast("Calling Emergency Contact...") },
-        { icon: "🌐", label: "Preferred Language", sub: "English, हिंदी", action: () => showToast("Changing Language...") },
-        { icon: "🌙", label: "Dark Mode", sub: theme.mode === "dark" ? "On" : "Off", action: toggleTheme },
-        { icon: "🔔", label: "Notification Settings", sub: "All alerts enabled", action: () => showToast("Opening Notification Settings...") },
-        { icon: "🔒", label: "Privacy & Security", sub: "Biometric active", action: () => showToast("Opening Security Settings...") },
-      ].map(item => (
-        <button key={item.label} onClick={item.action} style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: 14, padding: "12px 14px", display: "flex", alignItems: "center", gap: 12, width: "100%",
-        //  cursor: item.action ? "pointer" : "default", textAlign: "left",
-          boxShadow: theme.mode === 'light' ? '0 1px 4px rgba(0,0,0,0.05)' : 'none' }}>
-          <span style={{ fontSize: 18 }}>{item.icon}</span>
-          <div style={{ flex: 1 }}>
-            <div style={{ color: theme.text, fontSize: 12, fontWeight: 600 }}>{item.label}</div>
-            <div style={{ color: theme.textSec, fontSize: 10, marginTop: 1 }}>{item.sub}</div>
-          </div>
-          {item.label === "Dark Mode" ? (
-            <div style={{ width: 32, height: 18, background: theme.mode === "dark" ? "#2563eb" : "#cbd5e1", borderRadius: 10, position: "relative", transition: "0.2s" }}>
-              <div style={{ width: 14, height: 14, background: "#fff", borderRadius: "50%", position: "absolute", top: 2, left: theme.mode === "dark" ? 16 : 2, transition: "0.2s" }} />
-            </div>
-          ) : (
-            <span style={{ color: theme.textSec, fontSize: 14 }}>›</span>
-          )}
-        </button>
-      ))}
-
-      <button onClick={() => { setRole(null); setCurrentScreen("role"); }} style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 14, padding: "14px", color: "#fca5a5", fontSize: 13, fontWeight: 700, cursor: "pointer", marginBottom: 20 }}>
-        🚪 Logout
-      </button>
     </div>
-  </div>
-);
+  );
+};
 
-// ─── BOTTOM NAVIGATION ─────────────────────────────────────────────────────────
-const DocBottomNav = ({ screen, setScreen, theme }: { screen: Screen; setScreen: (s: Screen) => void; theme: Theme }) => (
-  <div style={{ display: "flex", background: theme.navBg, borderTop: `1px solid ${theme.cardBorder}`, backdropFilter: "blur(20px)", padding: "8px 0 12px", flexShrink: 0 }}>
-    {[
-      { icon: "🏠", label: "Home", screen: "doc_home" as Screen },
-      { icon: "🗓️", label: "OPD", screen: "doc_opd" as Screen },
-      { icon: "🛏️", label: "IPD", screen: "doc_ipd" as Screen },
-      { icon: "🔔", label: "Alerts", screen: "doc_notifications" as Screen },
-      { icon: "👤", label: "Profile", screen: "doc_profile" as Screen },
-    ].map(nav => (
-      <button key={nav.label} onClick={() => setScreen(nav.screen)}
-        style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, background: "transparent", border: "none", cursor: "pointer", padding: "4px 0" }}>
-        <span style={{ fontSize: screen === nav.screen ? 22 : 19, filter: screen === nav.screen ? "none" : "grayscale(0.5)", transition: "all 0.2s" }}>{nav.icon}</span>
-        <span style={{ fontSize: 9, fontWeight: screen === nav.screen ? 700 : 400, color: screen === nav.screen ? "#2563eb" : theme.textSec }}>{nav.label}</span>
-        {screen === nav.screen && <div style={{ width: 18, height: 2, background: "#2563eb", borderRadius: 1 }} />}
-      </button>
-    ))}
-  </div>
-);
+const PatFamily = ({ setScreen, theme }: { setScreen: (s: Screen) => void; theme: ThemeMode }) => {
+  const t = THEMES[theme];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.bg }}>
+      <SectionHeader title="Family Members" subtitle={`${FAMILY_MEMBERS.length} members linked`} onBack={() => setScreen("pat_home")} theme={theme} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: 10 }} className="no-scrollbar">
+        {FAMILY_MEMBERS.map((m, i) => (
+          <div key={m.uhid} style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 16, padding: "14px", display: "flex", gap: 10, alignItems: "center", animation: `fadeInUp ${0.1 + i * 0.07}s ease-out` }}>
+            <div style={{ width: 44, height: 44, background: "linear-gradient(135deg,#0c4a6e,#0ea5e9)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <User size={20} color="#fff" strokeWidth={1.5} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ color: t.text, fontWeight: 700, fontSize: 13, fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic" }}>{m.name}</div>
+              <div style={{ color: t.subText, fontSize: 10, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{m.relation} · Age {m.age} · {m.blood}</div>
+              <div style={{ color: t.accent, fontSize: 9, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{m.uhid}</div>
+            </div>
+            <button style={{ background: "rgba(37,99,235,0.15)", border: "none", borderRadius: 10, padding: "6px 10px", color: t.accent, fontSize: 9, fontWeight: 600, cursor: "pointer", fontFamily: "'Cormorant Garamond', Georgia, serif" }}>View</button>
+          </div>
+        ))}
+        <button style={{ background: t.inputBg, border: `1px dashed ${t.border}`, borderRadius: 16, padding: "14px 0", color: t.accent, fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+          <Plus size={16} /> Add Family Member
+        </button>
+      </div>
+    </div>
+  );
+};
 
-const PatBottomNav = ({ screen, setScreen, theme }: { screen: Screen; setScreen: (s: Screen) => void; theme: Theme }) => (
-  <div style={{ display: "flex", background: theme.navBg, borderTop: `1px solid ${theme.cardBorder}`, backdropFilter: "blur(20px)", padding: "8px 0 12px", flexShrink: 0, position: "relative" }}>
-    {[
-      { icon: "🏠", label: "Home", screen: "pat_home" as Screen },
-      { icon: "📅", label: "Appts", screen: "pat_appointments" as Screen },
-      { icon: "🚑", label: "SOS", screen: "pat_sos" as Screen, sos: true },
-      { icon: "📋", label: "Records", screen: "pat_records" as Screen },
-      { icon: "👤", label: "Profile", screen: "pat_profile" as Screen },
-    ].map(nav => (
-      <button key={nav.label} onClick={() => setScreen(nav.screen)}
-        style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, background: "transparent", border: "none", cursor: "pointer", padding: "4px 0", position: "relative" }}>
-        {nav.sos ? (
-          <div style={{ width: 42, height: 42, background: "linear-gradient(135deg,#dc2626,#ef4444)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, marginTop: -18, boxShadow: "0 4px 16px rgba(220,38,38,0.5)", border: `3px solid ${theme.bg}` }}>🚑</div>
-        ) : (
-          <span style={{ fontSize: screen === nav.screen ? 22 : 19, filter: screen === nav.screen ? "none" : "grayscale(0.5)" }}>{nav.icon}</span>
+const PatProfile = ({ setScreen, setRole, setCurrentScreen, theme, setTheme }: {
+  setScreen: (s: Screen) => void; setRole: (r: Role) => void;
+  setCurrentScreen: (s: Screen) => void; theme: ThemeMode; setTheme: (t: ThemeMode) => void;
+}) => {
+  const [activeTab, setActiveTab] = useState<"info" | "health" | "settings" | "emergency">("info");
+  const [notifs, setNotifs] = useState(true);
+  const [lang, setLang] = useState("English");
+  const t = THEMES[theme];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: t.bg }}>
+      <SectionHeader title="Patient Profile" subtitle="Project 10 Hospital" onBack={() => setScreen("pat_home")} theme={theme} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "14px", display: "flex", flexDirection: "column", gap: 12 }} className="no-scrollbar">
+        <div style={{ background: "linear-gradient(135deg,#0c4a6e,#0ea5e9)", borderRadius: 20, padding: "18px", textAlign: "center", animation: "scaleIn 0.35s ease-out" }}>
+          <PatientAvatar size={68} />
+          <div style={{ color: "#ffffff", fontWeight: 800, fontSize: 17, marginTop: 10, fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic" }}>Rajesh Sharma</div>
+          <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 11, marginTop: 2, fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic" }}>Age 52 · Male · B+</div>
+          <div style={{ color: "#bae6fd", fontSize: 10, marginTop: 4, fontFamily: "'Libre Baskerville', Georgia, serif" }}>UHID: P10-P-2024-5891</div>
+        </div>
+
+        <div style={{ display: "flex", background: t.inputBg, borderRadius: 14, padding: 4, gap: 3 }}>
+          {([{ id: "info", label: "Info" }, { id: "health", label: "Health" }, { id: "settings", label: "Settings" }, { id: "emergency", label: "SOS" }] as const).map(tab => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+              style={{ flex: 1, padding: "7px 0", borderRadius: 10, border: "none", cursor: "pointer", fontSize: 10, fontWeight: activeTab === tab.id ? 700 : 400, background: activeTab === tab.id ? "linear-gradient(135deg,#0ea5e9,#0c4a6e)" : "transparent", color: activeTab === tab.id ? "#ffffff" : t.subText, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === "info" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, animation: "scaleIn 0.2s ease-out" }}>
+            {[
+              { Icon: Shield,   label: "UHID",           value: "P10-P-2024-5891" },
+              { Icon: Phone,    label: "Mobile",          value: "+91 98765 43210" },
+              { Icon: Send,     label: "Email",           value: "rajesh@gmail.com" },
+              { Icon: MapPin,   label: "Address",         value: "12, MG Road, Bangalore" },
+              { Icon: Activity, label: "Primary Doctor",  value: "Dr. Arjun Mehta, Cardiology" },
+            ].map(item => (
+              <div key={item.label} style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: "10px 14px", display: "flex", alignItems: "center", gap: 10 }}>
+                <item.Icon size={14} color={t.accent} />
+                <div>
+                  <div style={{ color: t.subText, fontSize: 9, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{item.label}</div>
+                  <div style={{ color: t.text, fontSize: 12, fontWeight: 600, fontFamily: "'Libre Baskerville', Georgia, serif" }}>{item.value}</div>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
-        <span style={{ fontSize: 9, fontWeight: screen === nav.screen ? 700 : 400, color: nav.sos ? "#fca5a5" : screen === nav.screen ? "#0ea5e9" : theme.textSec }}>{nav.label}</span>
-        {screen === nav.screen && !nav.sos && <div style={{ width: 18, height: 2, background: "#0ea5e9", borderRadius: 1 }} />}
-      </button>
-    ))}
-  </div>
-);
+
+        {activeTab === "health" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, animation: "scaleIn 0.2s ease-out" }}>
+            {[
+              { label: "Blood Group", value: "B Positive (B+)" },
+              { label: "Allergies", value: "Penicillin — SEVERE" },
+              { label: "Chronic Conditions", value: "Hypertension · Type 2 Diabetes" },
+              { label: "Current Medications", value: "Amlodipine 5mg · Metformin 500mg" },
+              { label: "Last Check-up", value: "15 Feb 2025" },
+              { label: "Insurance", value: "Star Health · Policy: SH-123456" },
+            ].map(item => (
+              <div key={item.label} style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: "10px 14px" }}>
+                <div style={{ color: t.subText, fontSize: 9, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{item.label}</div>
+                <div style={{ color: t.text, fontSize: 12, fontWeight: 600, marginTop: 2, fontFamily: "'Libre Baskerville', Georgia, serif" }}>{item.value}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === "settings" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, animation: "scaleIn 0.2s ease-out" }}>
+            <div style={{ background: "linear-gradient(135deg,#0c4a6e,#0ea5e9)", borderRadius: 14, padding: "14px" }}>
+              <div style={{ color: "#fff", fontSize: 12, fontWeight: 600, marginBottom: 10, fontFamily: "'Playfair Display', Georgia, serif", display: "flex", alignItems: "center", gap: 6 }}>
+                <Sun size={14} color="#fbbf24" /> Display Theme
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                {([{ id: "light" as ThemeMode, Icon: Sun, label: "Light" }, { id: "semidark" as ThemeMode, Icon: Sunset, label: "Semi Dark" }, { id: "dark" as ThemeMode, Icon: Moon, label: "Dark" }]).map(opt => (
+                  <button key={opt.id} onClick={() => setTheme(opt.id)}
+                    style={{ flex: 1, background: theme === opt.id ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.08)", border: `2px solid ${theme === opt.id ? "#fff" : "transparent"}`, borderRadius: 10, padding: "8px 4px", cursor: "pointer", color: "#fff", fontSize: 9, fontWeight: theme === opt.id ? 700 : 400, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, fontFamily: "'Cormorant Garamond', Georgia, serif", transition: "all 0.2s" }}>
+                    <opt.Icon size={14} color="#fff" />{opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "14px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ color: t.text, fontSize: 12, fontWeight: 600, fontFamily: "'Cormorant Garamond', Georgia, serif", display: "flex", alignItems: "center", gap: 5 }}><Bell size={13} /> Notifications</div>
+                  <div style={{ color: t.subText, fontSize: 9, marginTop: 2, fontFamily: "'Libre Baskerville', Georgia, serif" }}>{notifs ? "All alerts enabled" : "Muted"}</div>
+                </div>
+                <button onClick={() => setNotifs(n => !n)} style={{ background: notifs ? "#0ea5e9" : t.inputBg, border: `2px solid ${notifs ? "#0ea5e9" : t.border}`, borderRadius: 14, width: 44, height: 26, cursor: "pointer", position: "relative", transition: "all 0.2s" }}>
+                  <div style={{ width: 18, height: 18, background: "#fff", borderRadius: "50%", position: "absolute", top: 2, left: notifs ? 22 : 2, transition: "left 0.2s" }} />
+                </button>
+              </div>
+            </div>
+            <div style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "14px" }}>
+              <div style={{ color: t.text, fontSize: 12, fontWeight: 600, marginBottom: 8, fontFamily: "'Cormorant Garamond', Georgia, serif", display: "flex", alignItems: "center", gap: 5 }}><Globe size={13} /> Language</div>
+              <div style={{ display: "flex", gap: 6 }}>
+                {["English", "हिंदी", "ಕನ್ನಡ"].map(l => (
+                  <button key={l} onClick={() => setLang(l)} style={{ flex: 1, background: lang === l ? "linear-gradient(135deg,#0ea5e9,#0c4a6e)" : t.inputBg, border: `1px solid ${t.border}`, borderRadius: 10, padding: "8px 0", color: lang === l ? "#fff" : t.text, fontSize: 10, fontWeight: lang === l ? 700 : 400, cursor: "pointer", fontFamily: "'Cormorant Garamond', Georgia, serif", transition: "all 0.2s" }}>{l}</button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "emergency" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, animation: "scaleIn 0.2s ease-out" }}>
+            <div style={{ background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.3)", borderRadius: 14, padding: "12px 14px" }}>
+              <div style={{ color: "#fca5a5", fontSize: 10, fontWeight: 700, marginBottom: 6, display: "flex", alignItems: "center", gap: 5, fontFamily: "'Playfair Display', Georgia, serif" }}>
+                <AlertTriangle size={12} color="#fca5a5" /> IN CASE OF EMERGENCY
+              </div>
+              <div style={{ color: t.text, fontSize: 11, fontWeight: 600, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>Immediately inform medical staff of:</div>
+              <div style={{ color: t.subText, fontSize: 10, marginTop: 4, fontFamily: "'Libre Baskerville', Georgia, serif", fontStyle: "italic" }}>Blood Group: B+ · Allergies: Penicillin · Conditions: HTN, DM Type 2</div>
+            </div>
+            {[
+              { name: "Meera Sharma",  relation: "Spouse (Primary)", phone: "+91 98765 11111" },
+              { name: "Aryan Sharma",  relation: "Son",               phone: "+91 96543 22222" },
+              { name: "Dr. Arjun Mehta", relation: "Primary Doctor", phone: "+91 80-1234-0001" },
+            ].map((c, i) => (
+              <div key={i} style={{ background: t.cardBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ color: t.text, fontSize: 12, fontWeight: 600, fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic" }}>{c.name}</div>
+                  <div style={{ color: t.subText, fontSize: 10, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{c.relation}</div>
+                  <div style={{ color: t.accent, fontSize: 10, fontWeight: 600, fontFamily: "'Libre Baskerville', Georgia, serif" }}>{c.phone}</div>
+                </div>
+                <button style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 10, padding: "8px 12px", color: "#34d399", cursor: "pointer", display: "flex", alignItems: "center" }}>
+                  <Phone size={14} color="#34d399" />
+                </button>
+              </div>
+            ))}
+            <button style={{ background: t.inputBg, border: `1px dashed ${t.border}`, borderRadius: 14, padding: "12px 0", color: t.accent, fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "'Cormorant Garamond', Georgia, serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+              <Plus size={14} /> Add Emergency Contact
+            </button>
+          </div>
+        )}
+
+        <button onClick={() => { setRole(null); setCurrentScreen("role"); }}
+          style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 14, padding: "14px", color: "#fca5a5", fontSize: 13, fontWeight: 700, cursor: "pointer", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontFamily: "'Playfair Display', Georgia, serif" }}>
+          <LogOut size={16} color="#fca5a5" /> Logout
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ─── BOTTOM NAVIGATION ────────────────────────────────────────────────────────
+const DocBottomNav = ({ screen, setScreen, theme }: { screen: Screen; setScreen: (s: Screen) => void; theme: ThemeMode }) => {
+  const t = THEMES[theme];
+  const navItems = [
+    { Icon: Home,         label: "Home",    screen: "doc_home"          as Screen },
+    { Icon: Calendar,     label: "OPD",     screen: "doc_opd"           as Screen },
+    { Icon: BedDouble,    label: "IPD",     screen: "doc_ipd"           as Screen },
+    { Icon: Bell,         label: "Alerts",  screen: "doc_notifications" as Screen },
+    { Icon: User,         label: "Profile", screen: "doc_profile"       as Screen },
+  ];
+  return (
+    <div style={{ display: "flex", background: t.navBg, borderTop: `1px solid ${t.border}`, backdropFilter: "blur(20px)", padding: "8px 0 12px", flexShrink: 0 }}>
+      {navItems.map(nav => {
+        const active = screen === nav.screen;
+        return (
+          <button key={nav.label} onClick={() => setScreen(nav.screen)}
+            style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, background: "transparent", border: "none", cursor: "pointer", padding: "4px 0", transition: "all 0.2s" }}>
+            <nav.Icon size={active ? 22 : 18} color={active ? "#2563eb" : t.subText} style={{ transition: "all 0.2s" }} />
+            <span style={{ fontSize: 9, fontWeight: active ? 700 : 400, color: active ? "#2563eb" : t.subText, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{nav.label}</span>
+            {active && <div style={{ width: 18, height: 2, background: "#2563eb", borderRadius: 1 }} />}
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
+const PatBottomNav = ({ screen, setScreen, theme }: { screen: Screen; setScreen: (s: Screen) => void; theme: ThemeMode }) => {
+  const t = THEMES[theme];
+  const navItems: { Icon: React.ElementType; label: string; screen: Screen; sos?: boolean }[] = [
+    { Icon: Home,         label: "Home",    screen: "pat_home"         },
+    { Icon: Calendar,     label: "Appts",   screen: "pat_appointments" },
+    { Icon: Ambulance,    label: "SOS",     screen: "pat_sos",          sos: true },
+    { Icon: ClipboardList, label: "Records", screen: "pat_records"     },
+    { Icon: User,         label: "Profile", screen: "pat_profile"      },
+  ];
+  return (
+    <div style={{ display: "flex", background: t.navBg, borderTop: `1px solid ${t.border}`, backdropFilter: "blur(20px)", padding: "8px 0 12px", flexShrink: 0, position: "relative" }}>
+      {navItems.map(nav => {
+        const active = screen === nav.screen;
+        return (
+          <button key={nav.label} onClick={() => setScreen(nav.screen)}
+            style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, background: "transparent", border: "none", cursor: "pointer", padding: "4px 0", position: "relative" }}>
+            {nav.sos ? (
+              <div style={{ width: 42, height: 42, background: "linear-gradient(135deg,#dc2626,#ef4444)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", marginTop: -18, boxShadow: "0 4px 16px rgba(220,38,38,0.5)", border: `3px solid ${t.navBg}`, animation: "pulse-ring 2.5s infinite" }}>
+                <Ambulance size={18} color="#fff" strokeWidth={1.5} />
+              </div>
+            ) : (
+              <nav.Icon size={active ? 22 : 18} color={active ? "#0ea5e9" : t.subText} style={{ transition: "all 0.2s" }} />
+            )}
+            <span style={{ fontSize: 9, fontWeight: active ? 700 : 400, color: nav.sos ? "#fca5a5" : active ? "#0ea5e9" : t.subText, fontFamily: "'Cormorant Garamond', Georgia, serif" }}>{nav.label}</span>
+            {active && !nav.sos && <div style={{ width: 18, height: 2, background: "#0ea5e9", borderRadius: 1 }} />}
+          </button>
+        );
+      })}
+    </div>
+  );
+};
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 const Index = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>("splash");
   const [role, setRole] = useState<Role>(null);
   const [selectedPatient, setSelectedPatient] = useState<typeof OPD_PATIENTS[0] | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(true);
-  const [toastMsg, setToastMsg] = useState("");
-  const [toastVisible, setToastVisible] = useState(false);
-
-  const toggleTheme = () => setIsDarkMode(prev => !prev);
-
-  const showToast = (msg: string) => {
-    setToastMsg(msg);
-    setToastVisible(true);
-    setTimeout(() => setToastVisible(false), 2000);
-  };
-
-  const theme: Theme = isDarkMode ? {
-    mode: "dark",
-    bg: "#050d1a",
-    text: "#ffffff",
-    textSec: "rgba(147,197,253,0.6)",
-    cardBg: "rgba(26,58,110,0.25)",
-    cardBorder: "rgba(147,197,253,0.12)",
-    headerBg: "linear-gradient(135deg,#0a1628,#1a3a6e)",
-    inputBg: "rgba(147,197,253,0.1)",
-    inputBorder: "rgba(147,197,253,0.2)",
-    navBg: "rgba(10,22,40,0.98)",
-    accent: "#93c5fd",
-    iconBg: "rgba(147,197,253,0.15)"
-  } : {
-    mode: "light",
-    bg: "#f8fafc", // slate-50
-    text: "#1e293b", // slate-800
-    textSec: "#64748b", // slate-500
-    cardBg: "#ffffff",
-    cardBorder: "#e2e8f0", // slate-200
-    headerBg: "#f1f5f9", // slate-100
-    inputBg: "#f1f5f9",
-    inputBorder: "#cbd5e1", // slate-300
-    navBg: "rgba(255,255,255,0.95)",
-    accent: "#3b82f6", // blue-500
-    iconBg: "#e0f2fe" // light-blue-50
-  };
+  const [theme, setTheme] = useState<ThemeMode>("light");
 
   const handleRoleSelect = useCallback((r: Role) => { setRole(r); setCurrentScreen("login"); }, []);
-  const handleLogin = useCallback(() => setCurrentScreen("otp"), []);
-  const handleVerify = useCallback(() => {
+  const handleLogin     = useCallback(() => setCurrentScreen("otp"), []);
+  const handleVerify    = useCallback(() => {
     if (role === "doctor") setCurrentScreen("doc_home");
     else setCurrentScreen("pat_home");
   }, [role]);
@@ -1778,58 +2125,47 @@ const Index = () => {
 
   const renderScreen = () => {
     switch (currentScreen) {
-      case "splash": return <SplashScreen onDone={() => setCurrentScreen("role")} theme={theme} />;
-      case "role": return <RoleSelection onSelect={handleRoleSelect} theme={theme} />;
-      case "login": return <LoginScreen role={role} onLogin={handleLogin} onBack={() => setCurrentScreen("role")} theme={theme} />;
-      case "otp": return <OTPScreen role={role} onVerify={handleVerify} onBack={() => setCurrentScreen("login")} theme={theme} />;
-      // Doctor
-      case "doc_home": return <DocHome setScreen={setCurrentScreen} theme={theme} />;
-      case "doc_opd": return <DocOPD setScreen={setCurrentScreen} setSelectedPatient={setSelectedPatient} theme={theme} />;
-      case "doc_patient_detail": return <DocPatientDetail patient={selectedPatient} setScreen={setCurrentScreen} theme={theme} showToast={showToast} />;
-      case "doc_ipd": return <DocIPD setScreen={setCurrentScreen} theme={theme} showToast={showToast} />;
-      case "doc_prescription": return <DocPrescription setScreen={setCurrentScreen} theme={theme} showToast={showToast} />;
-      case "doc_video": return <DocVideo setScreen={setCurrentScreen} theme={theme} />;
-      case "doc_leave": return <DocLeave setScreen={setCurrentScreen} theme={theme} showToast={showToast} />;
-      case "doc_notifications": return <DocNotifications setScreen={setCurrentScreen} theme={theme} />;
-      case "doc_reports": return <DocReports setScreen={setCurrentScreen} theme={theme} />;
-      case "doc_profile": return <DocProfile setScreen={setCurrentScreen} setRole={setRole} setCurrentScreen={setCurrentScreen} theme={theme} toggleTheme={toggleTheme} showToast={showToast} />;
-      // Patient
-      case "pat_home": return <PatHome setScreen={setCurrentScreen} theme={theme} showToast={showToast} />;
-      case "pat_find_doctor": return <PatFindDoctor setScreen={setCurrentScreen} theme={theme} />;
-      case "pat_book_slot": return <PatBookSlot setScreen={setCurrentScreen} theme={theme} />;
-      case "pat_appointments": return <PatAppointments setScreen={setCurrentScreen} theme={theme} showToast={showToast} />;
-      case "pat_records": return <PatRecords setScreen={setCurrentScreen} theme={theme} showToast={showToast} />;
-      case "pat_lab": return <PatLab setScreen={setCurrentScreen} theme={theme} showToast={showToast} />;
-      case "pat_pharmacy": return <PatPharmacy setScreen={setCurrentScreen} theme={theme} />;
-      case "pat_sos": return <PatSOS setScreen={setCurrentScreen} theme={theme} />;
-      case "pat_video": return <PatVideo setScreen={setCurrentScreen} theme={theme} showToast={showToast} />;
-      case "pat_vitals": return <PatVitals setScreen={setCurrentScreen} theme={theme} showToast={showToast} />;
-      case "pat_billing": return <PatBilling setScreen={setCurrentScreen} theme={theme} showToast={showToast} />;
-      case "pat_notifications": return <PatNotifications setScreen={setCurrentScreen} theme={theme} />;
-      case "pat_family": return <PatFamily setScreen={setCurrentScreen} theme={theme} showToast={showToast} />;
-      case "pat_profile": return <PatProfile setScreen={setCurrentScreen} setRole={setRole} setCurrentScreen={setCurrentScreen} theme={theme} toggleTheme={toggleTheme} showToast={showToast} />;
+      case "splash":  return <SplashScreen onDone={() => setCurrentScreen("role")} />;
+      case "role":    return <RoleSelection onSelect={handleRoleSelect} />;
+      case "login":   return <LoginScreen role={role} onLogin={handleLogin} onBack={() => setCurrentScreen("role")} />;
+      case "otp":     return <OTPScreen role={role} onVerify={handleVerify} onBack={() => setCurrentScreen("login")} />;
+      case "doc_home":           return <DocHome setScreen={setCurrentScreen} theme={theme} setTheme={setTheme} />;
+      case "doc_opd":            return <DocOPD setScreen={setCurrentScreen} setSelectedPatient={setSelectedPatient} theme={theme} />;
+      case "doc_patient_detail": return <DocPatientDetail patient={selectedPatient} setScreen={setCurrentScreen} theme={theme} />;
+      case "doc_ipd":            return <DocIPD setScreen={setCurrentScreen} theme={theme} />;
+      case "doc_prescription":   return <DocPrescription setScreen={setCurrentScreen} theme={theme} />;
+      case "doc_video":          return <DocVideo setScreen={setCurrentScreen} theme={theme} />;
+      case "doc_leave":          return <DocLeave setScreen={setCurrentScreen} theme={theme} />;
+      case "doc_notifications":  return <DocNotifications setScreen={setCurrentScreen} theme={theme} />;
+      case "doc_reports":        return <DocReports setScreen={setCurrentScreen} theme={theme} />;
+      case "doc_profile":        return <DocProfile setScreen={setCurrentScreen} setRole={setRole} setCurrentScreen={setCurrentScreen} theme={theme} setTheme={setTheme} />;
+      case "pat_home":           return <PatHome setScreen={setCurrentScreen} theme={theme} setTheme={setTheme} />;
+      case "pat_find_doctor":    return <PatFindDoctor setScreen={setCurrentScreen} theme={theme} />;
+      case "pat_book_slot":      return <PatBookSlot setScreen={setCurrentScreen} theme={theme} />;
+      case "pat_appointments":   return <PatAppointments setScreen={setCurrentScreen} theme={theme} />;
+      case "pat_records":        return <PatRecords setScreen={setCurrentScreen} theme={theme} />;
+      case "pat_lab":            return <PatLab setScreen={setCurrentScreen} theme={theme} />;
+      case "pat_pharmacy":       return <PatPharmacy setScreen={setCurrentScreen} theme={theme} />;
+      case "pat_sos":            return <PatSOS setScreen={setCurrentScreen} theme={theme} />;
+      case "pat_video":          return <PatVideo setScreen={setCurrentScreen} theme={theme} />;
+      case "pat_vitals":         return <PatVitals setScreen={setCurrentScreen} theme={theme} />;
+      case "pat_billing":        return <PatBilling setScreen={setCurrentScreen} theme={theme} />;
+      case "pat_notifications":  return <PatNotifications setScreen={setCurrentScreen} theme={theme} />;
+      case "pat_family":         return <PatFamily setScreen={setCurrentScreen} theme={theme} />;
+      case "pat_profile":        return <PatProfile setScreen={setCurrentScreen} setRole={setRole} setCurrentScreen={setCurrentScreen} theme={theme} setTheme={setTheme} />;
       default: return null;
     }
   };
 
-  return (
-    <div style={{ minHeight: "100vh", background: "#030a14", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px 10px", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-      {/* Global Style for hiding scrollbars and animations */}
-      <style>{`
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
-        .shimmer { animation: shimmer 2s infinite; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fadeInUp { animation: fadeInUp 0.4s ease-out; }
-        @keyframes pulse-glow { 0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(220, 38, 38, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); } }
-      `}</style>
+  const outerBg = theme === "light" ? "#dde4f0" : "#030a14";
 
-      {/* iPhone 15 Pro Frame */}
+  return (
+    <div style={{ minHeight: "100vh", background: outerBg, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px 10px", fontFamily: "'Libre Baskerville', Georgia, 'Times New Roman', serif", transition: "background 0.4s" }}>
+      {/* iPhone 16 Frame */}
       <div style={{
         width: 393, minWidth: 393, maxWidth: 393,
         height: "88vh", maxHeight: 852,
-        background: isDarkMode ? "#000" : "#fff",
+        background: "#000",
         borderRadius: 54,
         overflow: "hidden",
         display: "flex",
@@ -1838,43 +2174,33 @@ const Index = () => {
         position: "relative",
         border: "1px solid #333",
       }}>
-        {/* Side buttons simulation */}
+        {/* Physical Buttons */}
         <div style={{ position: "absolute", left: -3, top: 120, width: 3, height: 40, background: "#2a2a2a", borderRadius: "2px 0 0 2px" }} />
         <div style={{ position: "absolute", left: -3, top: 175, width: 3, height: 40, background: "#2a2a2a", borderRadius: "2px 0 0 2px" }} />
         <div style={{ position: "absolute", right: -3, top: 150, width: 3, height: 70, background: "#2a2a2a", borderRadius: "0 2px 2px 0" }} />
 
-        {/* Dynamic Island */}
-        <DynamicIsland />
-        {/* Status Bar */}
-        <StatusBar isDark={isDarkMode} />
+        <StatusBar theme={theme} />
 
-        {/* App Content */}
         <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
           <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
             {renderScreen()}
           </div>
         </div>
 
-        {/* Bottom Navigation */}
-        {isDocScreen && !["doc_patient_detail", "doc_prescription", "doc_video", "doc_leave", "doc_notifications", "doc_reports"].includes(currentScreen) && (
+        {isDocScreen && !["doc_patient_detail","doc_prescription","doc_video","doc_leave","doc_notifications","doc_reports"].includes(currentScreen) && (
           <DocBottomNav screen={currentScreen} setScreen={setCurrentScreen} theme={theme} />
         )}
-        {isPatScreen && !["pat_find_doctor", "pat_book_slot", "pat_lab", "pat_pharmacy", "pat_video", "pat_vitals", "pat_billing", "pat_notifications", "pat_family"].includes(currentScreen) && (
+        {isPatScreen && !["pat_find_doctor","pat_book_slot","pat_lab","pat_pharmacy","pat_video","pat_vitals","pat_billing","pat_notifications","pat_family"].includes(currentScreen) && (
           <PatBottomNav screen={currentScreen} setScreen={setCurrentScreen} theme={theme} />
         )}
 
-        {/* Toast Notification */}
-        <Toast msg={toastMsg} visible={toastVisible} theme={theme} />
-
-        {/* Home Indicator */}
-        <div style={{ display: "flex", justifyContent: "center", paddingBottom: 6, paddingTop: 4, background: isDarkMode ? "rgba(0,0,0,0.95)" : "rgba(255,255,255,0.95)", flexShrink: 0 }}>
-          <div style={{ width: 120, height: 4, background: isDarkMode ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)", borderRadius: 2 }} />
+        <div style={{ display: "flex", justifyContent: "center", paddingBottom: 6, paddingTop: 4, background: theme === "light" ? "rgba(240,244,255,0.98)" : "rgba(0,0,0,0.95)", flexShrink: 0 }}>
+          <div style={{ width: 120, height: 4, background: theme === "light" ? "rgba(0,0,0,0.15)" : "rgba(255,255,255,0.2)", borderRadius: 2 }} />
         </div>
       </div>
 
-      {/* App Info outside frame */}
-      <div style={{ position: "fixed", bottom: 20, left: "50%", transform: "translateX(-50%)", textAlign: "center", color: "rgba(147,197,253,0.3)", fontSize: 10, letterSpacing: 2 }}>
-        MEDCORE PRO · PROJECT 10 · v2.1
+      <div style={{ position: "fixed", bottom: 20, left: "50%", transform: "translateX(-50%)", textAlign: "center", color: "rgba(147,197,253,0.3)", fontSize: 10, letterSpacing: 2, fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic" }}>
+        PROJECT 10 HOSPITAL · HEALTHCARE PLATFORM · v2.0
       </div>
     </div>
   );
