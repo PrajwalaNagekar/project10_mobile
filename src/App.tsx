@@ -5,12 +5,12 @@ import {
 import {
   Home, Calendar, Bell, User, BedDouble, Activity, Heart, Thermometer,
   Droplets, Weight, AlertTriangle, FileText, Users, Stethoscope, Brain,
-  Bone, Baby, Microscope, Ear, Eye, Dna, Pill, Cpu, Zap, Video,
+  Bone, Baby, Ear, Eye, Dna, Pill, Cpu, Zap, Video,
   Phone, Mic, MicOff, VideoOff, MessageSquare, Monitor, ChevronLeft,
   Plus, Minus, Search, Shield, Globe, Lock, Star, Clock, MapPin,
-  Cross, Siren, Ambulance, UserCheck, ClipboardList, TrendingUp,
+   Siren, Ambulance, UserCheck, ClipboardList, TrendingUp,
   LogOut, Settings, ChevronRight, Sun, Moon, Sunset, Fingerprint,
-  PenLine, Send, Printer, Share2, CheckCircle, XCircle, AlertCircle,
+   Send, Printer, Share2, CheckCircle, XCircle, AlertCircle,
   Building2, FlaskConical, ShoppingBag, Truck, Navigation, PhoneCall
 } from "lucide-react";
 
