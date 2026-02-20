@@ -2157,7 +2157,7 @@ const Index = () => {
     }
   };
 
-  const outerBg = theme === "light" ? "#dde4f0" : "#030a14";
+  const outerBg = theme === "light" ? "#FFFFFF" : "#030a14";
 
   return (
     <div style={{ minHeight: "100vh", background: outerBg, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px 10px", fontFamily: "'Libre Baskerville', Georgia, 'Times New Roman', serif", transition: "background 0.4s" }}>
@@ -2170,9 +2170,9 @@ const Index = () => {
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
-        boxShadow: "0 0 0 2px #2a2a2a, 0 0 0 4px #1a1a1a, 0 30px 80px rgba(0,0,0,0.8), 0 0 60px rgba(37,99,235,0.08)",
+        // boxShadow: "0 0 0 2px #2a2a2a, 0 0 0 4px #1a1a1a, 0 30px 80px rgba(0,0,0,0.8), 0 0 60px rgba(37,99,235,0.08)",
         position: "relative",
-        border: "1px solid #333",
+        border: "6px solid #050404",
       }}>
         {/* Physical Buttons */}
         <div style={{ position: "absolute", left: -3, top: 120, width: 3, height: 40, background: "#2a2a2a", borderRadius: "2px 0 0 2px" }} />
